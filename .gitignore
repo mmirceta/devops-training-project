@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Terraform / OpenTofu
+.terraform/
+*.tfstate
+*.tfstate.backup
+.terraform.lock.hcl
+
+# Kubernetes
+kubeconfig
+
+# Logs
+*.log
+
+# Env files
+.env
