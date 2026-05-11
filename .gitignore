@@ -1,11 +1,21 @@
 # macOS
 .DS_Store
 
+# IDE
+.vscode/
+.idea/
+
 # Terraform / OpenTofu
 .terraform/
 *.tfstate
 *.tfstate.backup
+*.tfstate.*
 .terraform.lock.hcl
+**/.terraform/*
+
+# Terragrunt
+*.terragrunt-cache
+**/.terragrunt-cache/*
 
 # Kubernetes
 kubeconfig
