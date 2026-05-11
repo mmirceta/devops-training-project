@@ -3,7 +3,7 @@ include "root"{
 }
 
 terraform {
-  source = "../../../modules/azure/network"
+  source = "../../../../modules/azure/network"
 }
 
 dependency "rg" {
@@ -33,6 +33,7 @@ inputs = {
     mgmt = {
       name             = "snet-mgmt-dev"
       address_prefixes = ["10.10.3.0/24"]
+      service_endpoints = ["Microsoft.Storage"]
     }
   }
 

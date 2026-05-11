@@ -27,6 +27,7 @@ resource "azurerm_subnet" "lz-subnet" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.lz-vnet.name
   address_prefixes     = each.value.address_prefixes
+  service_endpoints    = each.value.service_endpoints 
 }
 
 resource "azurerm_network_security_group" "lz-nsg" {
@@ -39,6 +40,7 @@ resource "azurerm_network_security_group" "lz-nsg" {
 }
 
 ##### by this point, it was without ai: 
+##### [x] add dependency for nsg rules 
 
 resource "azurerm_network_security_rule" "lz-nsg-rule" {
   for_each = merge([
@@ -62,6 +64,9 @@ resource "azurerm_network_security_rule" "lz-nsg-rule" {
   destination_address_prefix  = each.value.rule.destination_address_prefix
   resource_group_name         = var.resource_group_name
   network_security_group_name = each.value.nsg_name
+
+  depends_on = [ azurerm_network_security_group.lz-nsg ]
+
 }
 
 resource "azurerm_subnet_network_security_group_association" "lz-subnet-nsg-association" {

@@ -1,5 +1,19 @@
+terraform {
+  required_providers {
+    azurerm = {
+      source  = "hashicorp/azurerm"
+      version = "~> 4.0"
+    }
+  }
+}
+
+provider "azurerm" {
+  features {}
+  use_cli = true
+}
+
 resource "azurerm_storage_account" "this" {
-  name                     = "satfstate${var.environment}"
+  name                     = "satfstate${var.environment}mm"
   resource_group_name      = var.resource_group_name
   location                 = var.location
 
@@ -17,6 +31,8 @@ resource "azurerm_storage_account" "this" {
     bypass = [
       "AzureServices"
     ]
+
+    ip_rules = var.ip_rules
 
     virtual_network_subnet_ids = var.subnet_ids
   }
