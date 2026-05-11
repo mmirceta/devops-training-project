@@ -1,0 +1,97 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="Page-1" id="FimKVbpTOcmu9W23Ignh">
+    <mxGraphModel dx="2105" dy="1734" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;dashed=1;" value="" vertex="1">
+          <mxGeometry height="262.5" width="670" x="-830" y="120" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-6" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="6f_OE0Sx68u6Ul-DGPtG-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-8" connectable="0" parent="6f_OE0Sx68u6Ul-DGPtG-6" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="443" vertex="1">
+          <mxGeometry relative="1" x="-0.1111" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-3" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="210" width="120" x="-756" y="146.25" as="geometry" />
+        </mxCell>
+        <mxCell id="IbmuQ5roXGECVXmT4KIu-1" parent="1" style="verticalLabelPosition=bottom;html=1;verticalAlign=top;align=center;strokeColor=none;fillColor=#00BEF2;shape=mxgraph.azure.virtual_network;pointerEvents=1;" value="vnet" vertex="1">
+          <mxGeometry height="27.500000000000004" width="50" x="-820" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="IbmuQ5roXGECVXmT4KIu-2" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg;" value="mgmt" vertex="1">
+          <mxGeometry height="40.72" width="68" x="-730" y="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="IbmuQ5roXGECVXmT4KIu-8" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg;" value="app" vertex="1">
+          <mxGeometry height="40.72" width="68" x="-529" y="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="IbmuQ5roXGECVXmT4KIu-9" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/networking/Subnet.svg;" value="data" vertex="1">
+          <mxGeometry height="40.72" width="68" x="-340" y="157.5" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-7" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="6f_OE0Sx68u6Ul-DGPtG-5">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-10" connectable="0" parent="6f_OE0Sx68u6Ul-DGPtG-7" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="&lt;div&gt;1433&lt;/div&gt;" vertex="1">
+          <mxGeometry relative="1" x="-0.0145" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="210" width="120" x="-555" y="146.25" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-5" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;" value="" vertex="1">
+          <mxGeometry height="210" width="120" x="-366" y="146.25" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-11" parent="1" style="image;aspect=fixed;html=1;points=[];align=center;fontSize=12;image=img/lib/azure2/storage/Storage_Accounts_Classic.svg;" value="" vertex="1">
+          <mxGeometry height="52" width="65" x="-728.5" y="270" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-13" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-495" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-14" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-700" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-15" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-310" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-12" parent="1" style="image;aspect=fixed;perimeter=ellipsePerimeter;html=1;align=center;shadow=0;dashed=0;spacingTop=3;image=img/lib/active_directory/internet_globe.svg;" value="&lt;div&gt;Internet&lt;/div&gt;" vertex="1">
+          <mxGeometry height="50" width="50" x="-520" y="-30" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-21" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="6f_OE0Sx68u6Ul-DGPtG-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-22" connectable="0" parent="6f_OE0Sx68u6Ul-DGPtG-21" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" value="public IP" vertex="1">
+          <mxGeometry relative="1" x="-0.1985" y="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-20" parent="1" style="shape=umlActor;verticalLabelPosition=bottom;verticalAlign=top;html=1;outlineConnect=0;" value="Actor" vertex="1">
+          <mxGeometry height="60" width="30" x="-770" y="510" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-24" parent="1" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#60a917;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/icon-cache1/Evericons_16px-2245/x-1294.svg;fontColor=#ffffff;labelBorderColor=#2D7600;imageBackground=light-dark(#FFFFFF,#FF3333);" value="" vertex="1">
+          <mxGeometry height="21" width="21" x="-710" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-25" parent="1" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#60a917;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/icon-cache1/Evericons_16px-2245/x-1294.svg;fontColor=#ffffff;labelBorderColor=#2D7600;imageBackground=light-dark(#FFFFFF,#FF3333);" value="" vertex="1">
+          <mxGeometry height="21" width="21" x="-505.5" y="70" as="geometry" />
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-27" edge="1" parent="1" source="6f_OE0Sx68u6Ul-DGPtG-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" target="6f_OE0Sx68u6Ul-DGPtG-26" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="-470" y="-5" as="sourcePoint" />
+            <mxPoint x="-310" y="110" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="6f_OE0Sx68u6Ul-DGPtG-26" parent="1" style="shape=image;html=1;verticalAlign=top;verticalLabelPosition=bottom;labelBackgroundColor=#60a917;imageAspect=0;aspect=fixed;image=https://icons.diagrams.net/icon-cache1/Evericons_16px-2245/x-1294.svg;fontColor=#ffffff;labelBorderColor=#2D7600;imageBackground=light-dark(#FFFFFF,#FF3333);" value="" vertex="1">
+          <mxGeometry height="21" width="21" x="-320" y="70" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
