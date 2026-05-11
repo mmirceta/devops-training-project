@@ -23,7 +23,7 @@ inputs = {
   ]
 
   ip_rules = [
-    "178.221.140.9"
+    "add-ip-here"
   ]
 
   tags = {
