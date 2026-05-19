@@ -3,7 +3,7 @@ include "root"{
 }
 
 terraform {
-  source = "../../../../modules/azure/network"
+  source = "../../../modules/azure/network"
 }
 
 dependency "rg" {
@@ -13,7 +13,7 @@ dependency "rg" {
 inputs = {
   resource_group_name = dependency.rg.outputs.name
 
-  environment = "dev"
+  environment = "devops"
 
   address_space = ["10.10.0.0/16"]
 
@@ -33,8 +33,15 @@ inputs = {
     mgmt = {
       name             = "snet-mgmt-dev"
       address_prefixes = ["10.10.3.0/24"]
+      service_endpoints = ["Microsoft.Storage", "Microsoft.ContainerRegistry"]
+    }
+    
+    state = {
+      name             = "snet-state-dev"
+      address_prefixes = ["10.10.4.0/24"]
       service_endpoints = ["Microsoft.Storage"]
     }
+
   }
 
   nsgs = {
@@ -100,6 +107,36 @@ inputs = {
 
     mgmt = {
       name = "nsg-mgmt-dev"
+
+      rules = {
+        allow_ssh_from_my_ip = {
+          name                       = "Allow-SSH-From-My-IP"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range          = "*"
+          destination_port_range     = "22"
+          source_address_prefix      = include.root.locals.my_ip
+          destination_address_prefix = "10.10.3.0/24"
+        }
+
+        deny_internet_inbound = {
+          name                       = "Deny-Internet-Inbound"
+          priority                   = 4000
+          direction                  = "Inbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          source_port_range          = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+
+    state = {
+      name = "nsg-state-dev"
 
       rules = {
         deny_internet_inbound = {

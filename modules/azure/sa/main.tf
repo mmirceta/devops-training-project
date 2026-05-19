@@ -32,7 +32,7 @@ resource "azurerm_storage_account" "this" {
       "AzureServices"
     ]
 
-    ip_rules = var.ip_rules
+    ip_rules = var.ip_rules 
 
     virtual_network_subnet_ids = var.subnet_ids
   }

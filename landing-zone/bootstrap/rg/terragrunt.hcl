@@ -3,11 +3,11 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../modules/azure/rg/"
+  source = "../../../modules/azure/rg/"
 }
 
 inputs = {
-  environment = "dev"
+  environment = "devops"
 
   tags = {
     environment = "dev"

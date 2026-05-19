@@ -25,8 +25,12 @@ remote_state {
 #   }
 # }
 
+locals {
+  my_ip = get_env("TF_VAR_my_ip")
+}
+
 inputs = {
-  location = "north europe"
+  location = "west europe"
 }
 
 

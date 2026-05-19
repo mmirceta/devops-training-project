@@ -25,3 +25,6 @@ kubeconfig
 
 # Env files
 .env
+
+# Claude Code
+CLAUDE.md
