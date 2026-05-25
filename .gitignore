@@ -26,5 +26,9 @@ kubeconfig
 # Env files
 .env
 
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
+
 # Claude Code
 CLAUDE.md

@@ -2,46 +2,42 @@ include "root"{
   path = find_in_parent_folders("root.hcl")
 }
 
+include "dev" {
+  path   = find_in_parent_folders("dev.hcl")
+  expose = true
+}
+
 terraform {
-  source = "../../../modules/azure/network"
+  source = "../../../../modules/azure/network"
 }
 
 dependency "rg" {
-  config_path = "../rg"
+  config_path = "../01-rg"
 }
 
 inputs = {
   resource_group_name = dependency.rg.outputs.name
 
-  environment = "devops"
+  address_space = ["10.20.0.0/16"]
 
-  address_space = ["10.10.0.0/16"]
 
-##### by this point, it was without ai: 
-##### fix: add dependency (nsg) for rules
     subnets = {
     app = {
       name             = "snet-app-dev"
-      address_prefixes = ["10.10.1.0/24"]
+      address_prefixes = ["10.20.1.0/24"]
     }
 
     data = {
       name             = "snet-data-dev"
-      address_prefixes = ["10.10.2.0/24"]
+      address_prefixes = ["10.20.2.0/24"]
+      service_endpoints = ["Microsoft.Storage"]
     }
 
     mgmt = {
       name             = "snet-mgmt-dev"
-      address_prefixes = ["10.10.3.0/24"]
-      service_endpoints = ["Microsoft.Storage", "Microsoft.ContainerRegistry"]
+      address_prefixes = ["10.20.3.0/24"]
+      service_endpoints = ["Microsoft.KeyVault", "Microsoft.ContainerRegistry"]
     }
-    
-    state = {
-      name             = "snet-state-dev"
-      address_prefixes = ["10.10.4.0/24"]
-      service_endpoints = ["Microsoft.Storage"]
-    }
-
   }
 
   nsgs = {
@@ -57,8 +53,8 @@ inputs = {
           protocol                   = "Tcp"
           source_port_range          = "*"
           destination_port_range     = "443"
-          source_address_prefix      = "10.10.3.0/24"
-          destination_address_prefix = "10.10.1.0/24"
+          source_address_prefix      = "10.20.3.0/24"
+          destination_address_prefix = "10.20.1.0/24"
         }
 
         deny_internet_inbound = {
@@ -87,8 +83,8 @@ inputs = {
           protocol                   = "Tcp"
           source_port_range          = "*"
           destination_port_range     = "1433"
-          source_address_prefix      = "10.10.1.0/24"
-          destination_address_prefix = "10.10.2.0/24"
+          source_address_prefix      = "10.20.1.0/24"
+          destination_address_prefix = "10.20.2.0/24"
         }
 
         deny_internet_inbound = {
@@ -117,8 +113,8 @@ inputs = {
           protocol                   = "Tcp"
           source_port_range          = "*"
           destination_port_range     = "22"
-          source_address_prefix      = include.root.locals.my_ip
-          destination_address_prefix = "10.10.3.0/24"
+          source_address_prefix      = get_env("TF_VAR_my_ip")
+          destination_address_prefix = "10.20.3.0/24"
         }
 
         deny_internet_inbound = {
@@ -134,29 +130,6 @@ inputs = {
         }
       }
     }
-
-    state = {
-      name = "nsg-state-dev"
-
-      rules = {
-        deny_internet_inbound = {
-          name                       = "Deny-Internet-Inbound"
-          priority                   = 4000
-          direction                  = "Inbound"
-          access                     = "Deny"
-          protocol                   = "*"
-          source_port_range          = "*"
-          destination_port_range     = "*"
-          source_address_prefix      = "Internet"
-          destination_address_prefix = "*"
-        }
-      }
-    }
   }
 
-  tags = {
-    environment = "dev"
-    project     = "devops-training-project"
-    managed_by  = "terragrunt"
-  }
 }

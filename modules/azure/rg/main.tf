@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_resource_group" "lz-rg" {
-  name     = "rg-${var.environment}-training"
+  name     = "rg-devops-training-${var.env}"
   location = var.location
 }
 

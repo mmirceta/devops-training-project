@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_virtual_network" "lz-vnet" {
-  name                = "lz-${var.environment}-vnet"
+  name                = "lz-${var.env}-vnet"
   location            = var.location
   resource_group_name = var.resource_group_name
   address_space       = var.address_space

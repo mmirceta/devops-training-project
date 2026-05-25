@@ -7,17 +7,21 @@ terraform {
 }
 
 dependency "rg" {
-  config_path = "../../../bootstrap/rg/"
+  config_path = "../01-rg/"
 }
 
 dependency "network" {
-  config_path = "../../../bootstrap/network"
+  config_path = "../02-network/"
+}
+
+locals {
+  env = "dev"
 }
 
 inputs = {
   resource_group_name = dependency.rg.outputs.name
 
-  environment = "dev"
+  env = local.env
 
   sku           = "Premium"
   admin_enabled = false
@@ -26,8 +30,7 @@ inputs = {
   vnet_id   = dependency.network.outputs.vnet_id
 
   tags = {
-    environment = "dev"
-    project     = "devops-training-project"
-    managed_by  = "terragrunt"
+    environment = local.env
+    project     = "devops-training"
   }
 }

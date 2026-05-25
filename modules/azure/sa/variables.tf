@@ -2,7 +2,7 @@ variable "resource_group_name" {
   type = string
 }
 
-variable "environment" {
+variable "env" {
   type = string
 }
 
@@ -21,4 +21,14 @@ variable "tags" {
 variable "ip_rules" {
   type    = list(string)
   default = []
+}
+
+variable "containers" {
+  type    = list(string)
+  default = []
+}
+
+variable "enable_lock" {
+  type    = bool
+  default = false
 }

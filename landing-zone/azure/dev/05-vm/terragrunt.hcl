@@ -7,17 +7,25 @@ terraform {
 }
 
 dependency "rg" {
-  config_path = "../../../bootstrap/rg/"
+  config_path = "../01-rg/"
 }
 
 dependency "network" {
-  config_path = "../../../bootstrap/network"
+  config_path = "../02-network/"
+}
+
+dependency "acr" {
+  config_path = "../04-acr/"
+}
+
+locals {
+  env = "dev"
 }
 
 inputs = {
   resource_group_name = dependency.rg.outputs.name
 
-  environment = "dev"
+  env = local.env
   name        = "acr-test"
   location    = "westeurope"
 
@@ -30,8 +38,7 @@ inputs = {
   admin_password = get_env("TF_VAR_vm_admin_password")
 
   tags = {
-    environment = "dev"
-    project     = "devops-training-project"
-    managed_by  = "terragrunt"
+    environment = local.env
+    project     = "devops-training"
   }
 }

@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_public_ip" "lz-vm-pip" {
-  name                = "pip-${var.name}-${var.environment}"
+  name                = "pip-${var.name}-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
   allocation_method   = "Static"
@@ -24,7 +24,7 @@ resource "azurerm_public_ip" "lz-vm-pip" {
 }
 
 resource "azurerm_network_interface" "lz-vm-nic" {
-  name                = "nic-${var.name}-${var.environment}"
+  name                = "nic-${var.name}-${var.env}"
   location            = var.location
   resource_group_name = var.resource_group_name
 
@@ -39,7 +39,7 @@ resource "azurerm_network_interface" "lz-vm-nic" {
 }
 
 resource "azurerm_linux_virtual_machine" "lz-vm" {
-  name                            = "vm-${var.name}-${var.environment}"
+  name                            = "vm-${var.name}-${var.env}"
   location                        = var.location
   resource_group_name             = var.resource_group_name
   size                            = var.size
@@ -49,6 +49,7 @@ resource "azurerm_linux_virtual_machine" "lz-vm" {
   admin_password                  = var.admin_password
 
   network_interface_ids = [azurerm_network_interface.lz-vm-nic.id]
+  custom_data           = filebase64("${path.module}/cloud-init.yaml")
 
   depends_on = [azurerm_network_interface.lz-vm-nic]
 

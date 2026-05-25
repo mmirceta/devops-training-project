@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_storage_account" "this" {
-  name                     = "satfstate${var.environment}mm"
+  name                     = "sa${var.env}trainingmm"
   resource_group_name      = var.resource_group_name
   location                 = var.location
 
@@ -40,8 +40,17 @@ resource "azurerm_storage_account" "this" {
   tags = var.tags
 }
 
-resource "azurerm_storage_container" "tfstate" {
-  name                  = "tfstate${var.environment}"
+resource "azurerm_management_lock" "this" {
+  count      = var.enable_lock ? 1 : 0
+  name       = "lock-${azurerm_storage_account.this.name}"
+  scope      = azurerm_storage_account.this.id
+  lock_level = "CanNotDelete"
+}
+
+resource "azurerm_storage_container" "this" {
+  for_each = toset(var.containers)
+
+  name                  = each.value
   storage_account_id    = azurerm_storage_account.this.id
   container_access_type = "private"
 }

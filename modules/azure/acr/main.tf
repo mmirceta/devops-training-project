@@ -13,7 +13,7 @@ provider "azurerm" {
 }
 
 resource "azurerm_container_registry" "lz-acr" {
-  name                = "acr${var.environment}training"
+  name                = "acr${var.env}training"
   resource_group_name = var.resource_group_name
   location            = var.location
   sku                 = var.sku
@@ -33,7 +33,7 @@ resource "azurerm_private_dns_zone" "lz-acr-dns" {
 }
 
 resource "azurerm_private_dns_zone_virtual_network_link" "lz-acr-dns-link" {
-  name                  = "pdnslink-acr-${var.environment}-training"
+  name                  = "pdnslink-acr-${var.env}-training"
   resource_group_name   = var.resource_group_name
   private_dns_zone_name = azurerm_private_dns_zone.lz-acr-dns.name
   virtual_network_id    = var.vnet_id
@@ -41,20 +41,20 @@ resource "azurerm_private_dns_zone_virtual_network_link" "lz-acr-dns-link" {
 }
 
 resource "azurerm_private_endpoint" "lz-acr-pe" {
-  name                = "pe-acr-${var.environment}-training"
+  name                = "pe-acr-${var.env}-training"
   location            = var.location
   resource_group_name = var.resource_group_name
   subnet_id           = var.subnet_id
 
   private_service_connection {
-    name                           = "psc-acr-${var.environment}-training"
+    name                           = "psc-acr-${var.env}-training"
     private_connection_resource_id = azurerm_container_registry.lz-acr.id
     subresource_names              = ["registry"]
     is_manual_connection           = false
   }
 
   private_dns_zone_group {
-    name                 = "pdnszg-acr-${var.environment}-training"
+    name                 = "pdnszg-acr-${var.env}-training"
     private_dns_zone_ids = [azurerm_private_dns_zone.lz-acr-dns.id]
   }
 

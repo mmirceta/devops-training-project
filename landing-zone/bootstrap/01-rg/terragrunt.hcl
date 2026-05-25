@@ -6,11 +6,15 @@ terraform {
   source = "../../../modules/azure/rg/"
 }
 
+locals {
+  env = "bootstrap"
+}
+
 inputs = {
-  environment = "devops"
+  env = local.env
 
   tags = {
-    environment = "dev"
+    environment = local.env
     project     = "devops-training"
   }
 }
