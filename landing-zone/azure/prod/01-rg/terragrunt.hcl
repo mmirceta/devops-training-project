@@ -9,7 +9,7 @@ include "prod" {
 }
 
 terraform {
-  source = "../../../../modules/azure/rg/"
+  source = "../../../../modules/rg/"
 }
 
 

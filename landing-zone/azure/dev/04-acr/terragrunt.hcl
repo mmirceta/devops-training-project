@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../../modules/azure/acr"
+  source = "../../../../modules/acr"
 }
 
 dependency "rg" {

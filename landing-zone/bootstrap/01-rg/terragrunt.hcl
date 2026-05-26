@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules/azure/rg/"
+  source = "../../../modules/rg/"
 }
 
 locals {
