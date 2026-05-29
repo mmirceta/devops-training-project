@@ -11,3 +11,9 @@ jobs:
     steps:
       - run: echo "Hello DevOps"
       - run: echo "Environment loaded"
+
+      - name: Check secrets
+        run: |
+          echo "Client ID length: ${#ARM_CLIENT_ID}"
+        env:
+          ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
