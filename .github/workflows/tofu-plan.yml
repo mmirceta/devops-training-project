@@ -48,3 +48,7 @@ jobs:
           tofu version
           terragrunt --version
           az account show
+      
+      - name: Terragrunt plan dev RG
+        working-directory: landing-zone/dev/Azure/rg
+        run: terragrunt -run-all plan -out=tfplan -detailed-exitcode
