@@ -17,3 +17,13 @@ jobs:
           echo "Client ID length: ${#ARM_CLIENT_ID}"
         env:
           ARM_CLIENT_ID: ${{ secrets.ARM_CLIENT_ID }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.ARM_CLIENT_ID }}
+          client-secret: ${{ secrets.ARM_CLIENT_SECRET }}
+          tenant-id: ${{ secrets.ARM_TENANT_ID }}
+          subscription-id: ${{ secrets.ARM_SUBSCRIPTION_ID }}
+      
+      - run: az account show
