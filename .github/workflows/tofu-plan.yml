@@ -50,5 +50,5 @@ jobs:
           az account show
       
       - name: Terragrunt plan dev RG
-        working-directory: landing-zone/Azure/dev/rg/
+        working-directory: landing-zone/Azure/dev/01-rg/
         run: terragrunt plan
