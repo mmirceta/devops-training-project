@@ -10,4 +10,4 @@ jobs:
 
     steps:
       - run: echo "Hello DevOps"
-      - run: echo "Environment loaded: ${{ job.environment }}"
+      - run: echo "Environment loaded"
