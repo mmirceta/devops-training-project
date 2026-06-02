@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   plan-dev:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: dev
 
     env:
