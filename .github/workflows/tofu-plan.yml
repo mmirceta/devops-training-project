@@ -37,6 +37,13 @@ jobs:
         with:
           tofu_version: 1.8.1
 
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION="0.68.4"
+          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
       - name: Check tools
         run: |
           tofu version
