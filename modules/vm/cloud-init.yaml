@@ -6,8 +6,12 @@ package_upgrade: true
 packages:
   - ca-certificates
   - curl
+  - wget
   - gnupg
   - lsb-release
+  - git
+  - unzip
+  - jq
 
 runcmd:
   # Docker
@@ -23,3 +27,35 @@ runcmd:
 
   # Azure CLI
   - curl -sL https://aka.ms/InstallAzureCLIDeb | bash
+
+  # Node.js 20 for GitHub Actions runner
+  - apt-get remove -y nodejs npm libnode-dev || true
+  - apt-get autoremove -y || true
+  - apt-get clean
+  - dpkg --configure -a || true
+  - curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
+  - apt-get install -y nodejs
+
+  # OpenTofu
+  - curl --proto '=https' --tlsv1.2 -fsSL https://get.opentofu.org/install-opentofu.sh -o install-opentofu.sh
+  - chmod +x install-opentofu.sh
+  - ./install-opentofu.sh --install-method deb
+  - rm -f install-opentofu.sh
+
+  # Terragrunt
+  - wget -O /usr/local/bin/terragrunt https://github.com/gruntwork-io/terragrunt/releases/download/v0.68.4/terragrunt_linux_amd64
+  - chmod +x /usr/local/bin/terragrunt
+
+  # GitHub Runner user
+  - useradd -m -s /bin/bash githubrunner || true
+  - mkdir -p /home/githubrunner/actions-runner
+  - chown -R githubrunner:githubrunner /home/githubrunner/actions-runner
+
+  # Verify installations
+  - node --version
+  - npm --version
+  - tofu version
+  - terragrunt --version
+  - az version
+  - docker --version
+  - git --version

@@ -23,7 +23,8 @@ inputs = {
   env = local.env
 
   subnet_ids = [
-    dependency.network.outputs.subnet_ids["state"]
+    dependency.network.outputs.subnet_ids["state"],
+    dependency.network.outputs.subnet_ids["runner"]
   ]
 
   ip_rules = [
