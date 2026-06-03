@@ -1,0 +1,34 @@
+name: Validate PR Source
+
+on:
+  pull_request:
+    branches:
+      - dev
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  validate-source-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Validate PR source branch
+        run: |
+          echo "Source branch: ${{ github.head_ref }}"
+          echo "Target branch: ${{ github.base_ref }}"
+
+          if [[ "${{ github.base_ref }}" == "dev" ]]; then
+            if [[ "${{ github.head_ref }}" != feature/* ]]; then
+              echo "Only feature/* branches can be merged into dev."
+              exit 1
+            fi
+          fi
+
+          if [[ "${{ github.base_ref }}" == "main" ]]; then
+            if [[ "${{ github.head_ref }}" != "dev" ]]; then
+              echo "Only dev branch can be merged into main."
+              exit 1
+            fi
+          fi
