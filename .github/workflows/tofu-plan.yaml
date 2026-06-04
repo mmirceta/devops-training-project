@@ -59,4 +59,4 @@ jobs:
       
       - name: Terragrunt plan dev RG
         working-directory: landing-zone/azure/dev/
-        run: terragrunt run-all plan --non-interactive
+        run: terragrunt run-all plan --terragrunt-non-interactive
