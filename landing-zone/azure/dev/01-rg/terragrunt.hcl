@@ -12,4 +12,3 @@ terraform {
   source = "../../../../modules/rg/"
 }
 
-
