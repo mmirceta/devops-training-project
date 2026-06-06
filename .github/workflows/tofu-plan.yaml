@@ -59,4 +59,4 @@ jobs:
       
       - name: Terragrunt apply dev RG
         working-directory: landing-zone/azure/dev/
-        run: terragrunt run --all apply --non-interactive
+        run: terragrunt run-all plan --terragrunt-non-interactive #udpate terragrunt to 0.80+
