@@ -56,18 +56,42 @@ jobs:
         working-directory: landing-zone/azure/dev
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt
-          cat $GITHUB_WORKSPACE/plan.txt
+          terragrunt run-all plan --terragrunt-non-interactive -no-color 2>&1 | tee $GITHUB_WORKSPACE/plan.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Prepare PR comment
         run: |
-          ls -la
           {
             echo "## Terragrunt Plan - Dev"
             echo ""
-            echo '```hcl'
+
+            echo "### Resource Changes"
+            echo ""
+            echo '```'
+            grep -E "# .*(will be created|will be destroyed|will be updated in-place|must be replaced)" plan.txt \
+              | sed 's/  # //' \
+              || echo "No resource changes detected."
+            echo '```'
+            echo ""
+
+            echo "### Summary"
+            echo ""
+            if grep -q "^Plan:" plan.txt; then
+              grep "^Plan:" plan.txt | while IFS= read -r line; do echo "- $line"; done
+            elif grep -q "No changes" plan.txt; then
+              echo "> No changes. Infrastructure matches the configuration."
+            else
+              echo "> Plan output unavailable or plan failed."
+            fi
+            echo ""
+
+            echo "<details>"
+            echo "<summary>Full Plan Output</summary>"
+            echo ""
+            echo '```'
             cat plan.txt
             echo '```'
+            echo "</details>"
           } > comment.md
 
       - name: Comment plan on PR
