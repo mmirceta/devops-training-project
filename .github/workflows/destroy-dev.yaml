@@ -7,7 +7,7 @@ permissions:
   contents: read
 
 jobs:
-  destroy -dev:
+  destroy-dev:
     #runs-on: self-hosted
     runs-on: ubuntu-latest
     environment: dev
