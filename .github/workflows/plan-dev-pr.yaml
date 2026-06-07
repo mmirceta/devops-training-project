@@ -51,6 +51,16 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
+      - name: OpenTofu fmt check
+        run: tofu fmt -check -recursive
+
+      - name: Terragrunt hclfmt check
+        run: terragrunt hclfmt --check --terragrunt-working-dir .
+
+      - name: Terragrunt validate dev
+        working-directory: landing-zone/azure/dev
+        run: terragrunt run-all validate --terragrunt-non-interactive
+
       - name: Terragrunt plan dev
         id: plan
         working-directory: landing-zone/azure/dev
