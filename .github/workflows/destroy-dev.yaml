@@ -18,7 +18,8 @@ jobs:
       ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
       ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
       TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
-      
+      ARM_USE_OIDC: true
+
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
       #ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
 
@@ -66,6 +67,10 @@ jobs:
           tofu version
           terragrunt --version
           az account show
+
+      - name: Terragrunt init dev
+        working-directory: landing-zone/azure/dev
+        run: terragrunt run-all init --terragrunt-non-interactive     
       
       - name: Destroy Dev Environment
         working-directory: landing-zone/azure/dev
