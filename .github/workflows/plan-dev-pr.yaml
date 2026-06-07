@@ -52,13 +52,19 @@ jobs:
           sudo mv terragrunt /usr/local/bin/terragrunt
 
       - name: Terragrunt plan dev
+        id: plan
         working-directory: landing-zone/azure/dev
+        continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color > plan.txt
-          cat plan.txt
+          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt
+          cat $GITHUB_WORKSPACE/plan.txt
 
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: terragrunt-plan-dev
-          path: landing-zone/azure/dev/plan.txt
+          path: plan.txt
+
+      - name: Fail if plan failed
+        if: steps.plan.outcome == 'failure'
+        run: exit 1
