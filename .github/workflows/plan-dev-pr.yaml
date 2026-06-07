@@ -59,11 +59,22 @@ jobs:
           terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt
           cat $GITHUB_WORKSPACE/plan.txt
 
+      - name: Prepare PR comment
+        run: |
+          ls -la
+          {
+            echo "## Terragrunt Plan - Dev"
+            echo ""
+            echo '```hcl'
+            cat plan.txt
+            echo '```'
+          } > comment.md
+
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
           header: terragrunt-plan-dev
-          path: plan.txt
+          path: comment.md
 
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
