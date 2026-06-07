@@ -1,0 +1,64 @@
+name: Plan Dev PR
+
+on:
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - "landing-zone/azure/dev/**"
+      - "modules/**"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  plan-dev:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
+      
+      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+      ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          creds: |
+            {
+              "clientId": "${{ vars.ARM_CLIENT_ID }}",
+              "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
+              "subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}",
+              "tenantId": "${{ vars.ARM_TENANT_ID }}"
+            }
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.1
+
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION="0.68.4"
+          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
+      - name: Terragrunt plan dev
+        working-directory: landing-zone/azure/dev
+        run: |
+          terragrunt run-all plan --terragrunt-non-interactive -no-color > plan.txt
+          cat plan.txt
+
+      - name: Comment plan on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terragrunt-plan-dev
+          path: landing-zone/azure/dev/plan.txt
