@@ -61,35 +61,52 @@ jobs:
 
       - name: Prepare PR comment
         run: |
+          # Strip ANSI escape codes
+          sed 's/\x1b\[[0-9;]*m//g' plan.txt > plan_clean.txt
+
           {
             echo "## Terragrunt Plan - Dev"
             echo ""
 
             echo "### Resource Changes"
             echo ""
-            echo '```'
-            grep -E "# .*(will be created|will be destroyed|will be updated in-place|must be replaced)" plan.txt \
-              | sed 's/  # //' \
-              || echo "No resource changes detected."
-            echo '```'
-            echo ""
 
+            if grep -qE "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt; then
+              echo "| Module | Action | Resource |"
+              echo "|--------|--------|----------|"
+              grep -E "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt | \
+              awk '{
+                match($0, /\[([^\]]+)\]/, mod); module = mod[1]
+                match($0, /tofu: (.*)/, res); full = res[1]
+                action = "~ update"
+                if (full ~ /will be created/) action = "+ create"
+                else if (full ~ /will be destroyed/) action = "- destroy"
+                else if (full ~ /must be replaced/) action = "-/+ replace"
+                gsub(/ will be.*/, "", full); gsub(/ must be.*/, "", full)
+                print "| `" module "` | `" action "` | `" full "` |"
+              }'
+            else
+              echo "> No resource changes detected."
+            fi
+
+            echo ""
             echo "### Summary"
             echo ""
-            if grep -q "^Plan:" plan.txt; then
-              grep "^Plan:" plan.txt | while IFS= read -r line; do echo "- $line"; done
-            elif grep -q "No changes" plan.txt; then
+            if grep -qE "tofu: Plan:" plan_clean.txt; then
+              grep -E "tofu: Plan:" plan_clean.txt | \
+              awk '{match($0, /tofu: (.*)/, r); print "- " r[1]}'
+            elif grep -q "No changes" plan_clean.txt; then
               echo "> No changes. Infrastructure matches the configuration."
             else
               echo "> Plan output unavailable or plan failed."
             fi
-            echo ""
 
+            echo ""
             echo "<details>"
             echo "<summary>Full Plan Output</summary>"
             echo ""
             echo '```'
-            cat plan.txt
+            cat plan_clean.txt
             echo '```'
             echo "</details>"
           } > comment.md
