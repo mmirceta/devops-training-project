@@ -13,6 +13,10 @@ terraform {
 
 dependency "rg" {
   config_path = "../01-rg"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    name = "rg-dev-training"
+  }
 }
 
 inputs = {

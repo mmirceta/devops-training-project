@@ -51,23 +51,74 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
+      - name: OpenTofu fmt check
+        run: tofu fmt -check -recursive
+
+      - name: Terragrunt hclfmt check
+        run: terragrunt hclfmt --check --terragrunt-working-dir .
+
+      - name: Terragrunt validate dev
+        working-directory: landing-zone/azure/dev
+        run: terragrunt run-all validate --terragrunt-non-interactive
+
       - name: Terragrunt plan dev
         id: plan
         working-directory: landing-zone/azure/dev
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt
-          cat $GITHUB_WORKSPACE/plan.txt
+          terragrunt run-all plan --terragrunt-non-interactive -no-color 2>&1 | tee $GITHUB_WORKSPACE/plan.txt
+          exit ${PIPESTATUS[0]}
 
       - name: Prepare PR comment
         run: |
-          ls -la
+          # Strip ANSI escape codes
+          sed 's/\x1b\[[0-9;]*m//g' plan.txt > plan_clean.txt
+
           {
             echo "## Terragrunt Plan - Dev"
             echo ""
-            echo '```hcl'
-            cat plan.txt
+
+            echo "### Resource Changes"
+            echo ""
+
+            if grep -qE "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt; then
+              echo "| Module | Action | Resource |"
+              echo "|--------|--------|----------|"
+              grep -E "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt | \
+              awk '{
+                match($0, /\[([^\]]+)\]/, mod); module = mod[1]
+                match($0, /tofu: (.*)/, res); full = res[1]
+                action = "~ update"
+                if (full ~ /will be created/) action = "+ create"
+                else if (full ~ /will be destroyed/) action = "- destroy"
+                else if (full ~ /must be replaced/) action = "-/+ replace"
+                gsub(/ will be.*/, "", full); gsub(/ must be.*/, "", full)
+                print "| `" module "` | `" action "` | `" full "` |"
+              }'
+            else
+              echo "> No resource changes detected."
+            fi
+
+            echo ""
+            echo "### Summary"
+            echo ""
+            if grep -qE "tofu: Plan:" plan_clean.txt; then
+              grep -E "tofu: Plan:" plan_clean.txt | \
+              awk '{match($0, /tofu: (.*)/, r); print "- " r[1]}'
+            elif grep -q "No changes" plan_clean.txt; then
+              echo "> No changes. Infrastructure matches the configuration."
+            else
+              echo "> Plan output unavailable or plan failed."
+            fi
+
+            echo ""
+            echo "<details>"
+            echo "<summary>Full Plan Output</summary>"
+            echo ""
             echo '```'
+            cat plan_clean.txt
+            echo '```'
+            echo "</details>"
           } > comment.md
 
       - name: Comment plan on PR
