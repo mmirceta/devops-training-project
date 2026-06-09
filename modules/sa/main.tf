@@ -13,9 +13,9 @@ provider "azurerm" {
 }
 
 resource "azurerm_storage_account" "this" {
-  name                     = "sa${var.env}trainingmm"
-  resource_group_name      = var.resource_group_name
-  location                 = var.location
+  name                = "sa${var.env}trainingmm"
+  resource_group_name = var.resource_group_name
+  location            = var.location
 
   account_tier             = "Standard"
   account_replication_type = "LRS"
@@ -32,7 +32,7 @@ resource "azurerm_storage_account" "this" {
       "AzureServices"
     ]
 
-    ip_rules = var.ip_rules 
+    ip_rules = var.ip_rules
 
     virtual_network_subnet_ids = var.subnet_ids
   }
