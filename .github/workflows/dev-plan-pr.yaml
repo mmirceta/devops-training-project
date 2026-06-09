@@ -11,6 +11,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   id-token: write
 
 jobs:
@@ -26,21 +27,9 @@ jobs:
       ARM_USE_OIDC: true
       
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
-      #ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
 
     steps:
       - uses: actions/checkout@v4
-
-      # - name: Azure Login
-      #   uses: azure/login@v2
-      #   with:
-      #     creds: |
-      #       {
-      #         "clientId": "${{ vars.ARM_CLIENT_ID }}",
-      #         "clientSecret": "${{ secrets.ARM_CLIENT_SECRET }}",
-      #         "subscriptionId": "${{ vars.ARM_SUBSCRIPTION_ID }}",
-      #         "tenantId": "${{ vars.ARM_TENANT_ID }}"
-      #       }
 
       - name: Azure Login
         uses: azure/login@v2
@@ -60,6 +49,8 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
+### check format
+
       - name: OpenTofu fmt check
         run: tofu fmt -check -recursive
 
@@ -70,65 +61,93 @@ jobs:
         working-directory: landing-zone/azure/dev
         run: terragrunt run-all validate --terragrunt-non-interactive
 
+### plan
+
       - name: Terragrunt plan dev
         id: plan
         working-directory: landing-zone/azure/dev
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color 2>&1 | tee $GITHUB_WORKSPACE/plan.txt
-          exit ${PIPESTATUS[0]}
+          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
-      - name: Prepare PR comment
+### comment plan
+
+      - name: Create plan summary
         run: |
-          # Strip ANSI escape codes
-          sed 's/\x1b\[[0-9;]*m//g' plan.txt > plan_clean.txt
+          python3 <<'PY'
+          import re
+          from pathlib import Path
 
-          {
-            echo "## Terragrunt Plan - Dev"
-            echo ""
+          plan = Path("plan.txt").read_text(errors="ignore")
 
-            echo "### Resource Changes"
-            echo ""
+          groups = {
+              "create": [],
+              "update": [],
+              "replace": [],
+              "destroy": [],
+          }
 
-            if grep -qE "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt; then
-              echo "| Module | Action | Resource |"
-              echo "|--------|--------|----------|"
-              grep -E "STDOUT.*tofu:.*(will be created|will be destroyed|will be updated|must be replaced)" plan_clean.txt | \
-              awk '{
-                match($0, /\[([^\]]+)\]/, mod); module = mod[1]
-                match($0, /tofu: (.*)/, res); full = res[1]
-                action = "~ update"
-                if (full ~ /will be created/) action = "+ create"
-                else if (full ~ /will be destroyed/) action = "- destroy"
-                else if (full ~ /must be replaced/) action = "-/+ replace"
-                gsub(/ will be.*/, "", full); gsub(/ must be.*/, "", full)
-                print "| `" module "` | `" action "` | `" full "` |"
-              }'
-            else
-              echo "> No resource changes detected."
-            fi
+          pattern = re.compile(
+              r'(# ([^\n]+?) (will be created|will be updated in-place|must be replaced|will be destroyed)\n.*?)(?=\n\s*# |\nPlan:|\Z)',
+              re.S
+          )
 
-            echo ""
-            echo "### Summary"
-            echo ""
-            if grep -qE "tofu: Plan:" plan_clean.txt; then
-              grep -E "tofu: Plan:" plan_clean.txt | \
-              awk '{match($0, /tofu: (.*)/, r); print "- " r[1]}'
-            elif grep -q "No changes" plan_clean.txt; then
-              echo "> No changes. Infrastructure matches the configuration."
-            else
-              echo "> Plan output unavailable or plan failed."
-            fi
+          for block, resource, action in pattern.findall(plan):
+              if action == "will be created":
+                  groups["create"].append((resource, block))
+              elif action == "will be updated in-place":
+                  groups["update"].append((resource, block))
+              elif action == "must be replaced":
+                  groups["replace"].append((resource, block))
+              elif action == "will be destroyed":
+                  groups["destroy"].append((resource, block))
 
-            echo ""
-            echo "<details>"
-            echo "<summary>Full Plan Output</summary>"
-            echo ""
-            echo '```'
-            cat plan_clean.txt
-            echo '```'
-            echo "</details>"
-          } > comment.md
+          def section(title, icon, items):
+              out = [f"## {icon} {title} ({len(items)})", ""]
+              if not items:
+                  out.append("_None_")
+                  out.append("")
+                  return out
+
+              for resource, block in items:
+                  out.append(f"<details>")
+                  out.append(f"<summary><code>{resource}</code></summary>")
+                  out.append("")
+                  out.append("```hcl")
+                  out.append(block.strip())
+                  out.append("```")
+                  out.append("")
+                  out.append("</details>")
+                  out.append("")
+              return out
+
+          comment = []
+          comment.append("# Terragrunt Plan - Dev")
+          comment.append("")
+          comment.append("| Action | Count |")
+          comment.append("|---|---:|")
+          comment.append(f"| Create | {len(groups['create'])} |")
+          comment.append(f"| Update | {len(groups['update'])} |")
+          comment.append(f"| Replace | {len(groups['replace'])} |")
+          comment.append(f"| Destroy | {len(groups['destroy'])} |")
+          comment.append("")
+
+          comment += section("Resources to create", "🟢", groups["create"])
+          comment += section("Resources to update", "🟡", groups["update"])
+          comment += section("Resources to replace", "🟠", groups["replace"])
+          comment += section("Resources to destroy", "🔴", groups["destroy"])
+
+          comment.append("<details>")
+          comment.append("<summary>Full raw plan</summary>")
+          comment.append("")
+          comment.append("```hcl")
+          comment.append(plan[-50000:])
+          comment.append("```")
+          comment.append("")
+          comment.append("</details>")
+
+          Path("comment.md").write_text("\n".join(comment))
+          PY
 
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
