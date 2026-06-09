@@ -1,0 +1,52 @@
+name: Apply PROD
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "landing-zone/azure/prod/**"
+      - "modules/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  apply-prod:
+    runs-on: ubuntu-latest
+    environment: prod
+
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
+      ARM_USE_OIDC: true
+      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.1
+
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION="0.68.4"
+          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
+### apply 
+
+      - name: Terragrunt apply prod
+        working-directory: landing-zone/azure/prod
+        run: terragrunt run-all apply --terragrunt-non-interactive      

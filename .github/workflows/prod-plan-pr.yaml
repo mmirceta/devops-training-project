@@ -1,7 +1,7 @@
-name: Plan-Apply PROD
+name: Plan PROD
 
 on:
-  push:
+  pull_request:
     branches:
       - main
     paths:
@@ -10,10 +10,12 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
+  issues: write
   id-token: write
 
 jobs:
-  apply-prod:
+  plan-prod:
     runs-on: ubuntu-latest
     environment: prod
 
@@ -53,15 +55,15 @@ jobs:
       - name: Terragrunt hclfmt check
         run: terragrunt hclfmt --check --terragrunt-working-dir .
 
-      - name: Terragrunt validate dev
-        working-directory: landing-zone/azure/dev
+      - name: Terragrunt validate prod
+        working-directory: landing-zone/azure/prod
         run: terragrunt run-all validate --terragrunt-non-interactive
 
 ### plan
 
-      - name: Terragrunt plan dev
+      - name: Terragrunt plan prod
         id: plan
-        working-directory: landing-zone/azure/dev
+        working-directory: landing-zone/azure/prod
         continue-on-error: true
         run: |
           terragrunt run-all plan --terragrunt-non-interactive -no-color 2>&1 | tee $GITHUB_WORKSPACE/plan.txt
@@ -77,7 +79,7 @@ jobs:
           REPLACED=$(grep -c "must be replaced" plan.txt || true)
 
           {
-            echo "## Terragrunt Plan - Dev"
+            echo "## Terragrunt Plan - Prod"
             echo ""
             echo "| Action | Count |"
             echo "|---|---:|"
@@ -99,15 +101,9 @@ jobs:
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: terragrunt-plan-dev
+          header: terragrunt-plan-prod
           path: comment.md
 
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
-### apply 
-
-      - name: Terragrunt apply prod
-        working-directory: landing-zone/azure/prod
-        run: terragrunt run-all apply --terragrunt-non-interactive      
