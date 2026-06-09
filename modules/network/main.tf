@@ -28,9 +28,9 @@ resource "azurerm_subnet" "lz-subnet" {
   resource_group_name  = var.resource_group_name
   virtual_network_name = azurerm_virtual_network.lz-vnet.name
   address_prefixes     = each.value.address_prefixes
-  service_endpoints    = each.value.service_endpoints 
+  service_endpoints    = each.value.service_endpoints
 
-  depends_on = [ azurerm_virtual_network.lz-vnet ]
+  depends_on = [azurerm_virtual_network.lz-vnet]
 }
 
 resource "azurerm_network_security_group" "lz-nsg" {
@@ -41,7 +41,7 @@ resource "azurerm_network_security_group" "lz-nsg" {
   resource_group_name = var.resource_group_name
   tags                = var.tags
 
-  depends_on = [ azurerm_subnet.lz-subnet ]
+  depends_on = [azurerm_subnet.lz-subnet]
 }
 
 ##### by this point, it was without ai: 
@@ -70,7 +70,7 @@ resource "azurerm_network_security_rule" "lz-nsg-rule" {
   resource_group_name         = var.resource_group_name
   network_security_group_name = each.value.nsg_name
 
-  depends_on = [ azurerm_network_security_group.lz-nsg ]
+  depends_on = [azurerm_network_security_group.lz-nsg]
 
 }
 
@@ -80,5 +80,5 @@ resource "azurerm_subnet_network_security_group_association" "lz-subnet-nsg-asso
   subnet_id                 = azurerm_subnet.lz-subnet[each.key].id
   network_security_group_id = azurerm_network_security_group.lz-nsg[each.key].id
 
-  depends_on = [ azurerm_network_security_group.lz-nsg ]
+  depends_on = [azurerm_network_security_group.lz-nsg]
 }

@@ -7,7 +7,7 @@ variable "env" {
 }
 
 variable "location" {
-  type = string
+  type    = string
   default = "westeurope"
 }
 
