@@ -165,3 +165,33 @@ jobs:
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
         run: exit 1
+
+  docker-image-scan:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate Docker Compose config
+        run: docker compose config
+
+      - name: Build Docker images
+        run: docker compose build
+
+      - name: Trivy scan Docker images
+        run: |
+          set -e
+
+          images=$(docker compose config --images | sort -u)
+
+          for image in $images; do
+            echo "Scanning image: $image"
+
+            docker run --rm \
+              -v /var/run/docker.sock:/var/run/docker.sock \
+              aquasec/trivy:latest image \
+              --exit-code 1 \
+              --severity HIGH,CRITICAL \
+              --ignore-unfixed \
+              "$image"
+          done
