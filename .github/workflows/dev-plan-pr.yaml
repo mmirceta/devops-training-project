@@ -7,6 +7,13 @@ on:
     paths:
       - "landing-zone/azure/dev/**"
       - "modules/**"
+      - "compose.yaml"
+      - "docker-compose.yaml"
+      - "**/Dockerfile"
+      - "**/.Dockerfile.*"
+      - "**/*.dockerfile"
+
+
 
 permissions:
   contents: read
