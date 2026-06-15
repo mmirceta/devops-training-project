@@ -1,0 +1,28 @@
+services:
+  web:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "8080:8080"
+
+    read_only: true
+
+    tmpfs:
+      - /tmp
+      - /var/cache/nginx:uid=101,gid=101
+      - /var/run:uid=101,gid=101
+
+  db:
+    image: postgres:17
+
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: testdb
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
