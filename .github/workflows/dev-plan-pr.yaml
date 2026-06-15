@@ -182,6 +182,11 @@ jobs:
           tenant-id: ${{ vars.ARM_TENANT_ID }}
           subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
+      - name: Debug Azure identity and ACR
+        run: |
+          az account show
+          az acr show --name acrdevtraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
+
       - name: Login to ACR
         run: az acr login --name acrdevtraining
 
