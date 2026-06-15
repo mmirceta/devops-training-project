@@ -193,9 +193,11 @@ jobs:
       - name: Build image
         run: |
           docker build \
-            -f nginx/dockerfile.nginx \
+            --pull \
+            --no-cache \
+            -f docker/nginx/Dockerfile.nginx \
             -t acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
-            ./nginx
+            docker/nginx
 
       - name: Show built image
         run: docker images acrdevtraining.azurecr.io/docker-web
