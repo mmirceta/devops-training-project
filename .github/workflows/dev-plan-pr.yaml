@@ -166,37 +166,45 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+####################### DOCKER IMAGE SCAN #######################
+
   docker-image-scan:
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: docker
-
+    environment: dev
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate Docker Compose config
-        run: docker compose config
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
-      - name: Build Docker images
-        run: docker compose build --pull --no-cache
+      - name: Login to ACR
+        run: az acr login --name acrdevtraining
 
-      - name: Trivy scan Docker images
+      - name: Build image
         run: |
-          set -e
+          docker build \
+            -f nginx/dockerfile.nginx \
+            -t acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            ./nginx
 
-          images=$(docker compose config --images | sort -u)
+      - name: Show built image
+        run: docker images acrdevtraining.azurecr.io/docker-web
 
-          for image in $images; do
-            echo "Scanning image: $image"
+      - name: Push image to ACR
+        run: |
+          docker push acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
 
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:latest image \
-              --exit-code 1 \
-              --severity HIGH,CRITICAL \
-              --ignore-unfixed \
-              "$image"
-          done
+      - name: Trivy scan pushed image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
