@@ -50,6 +50,19 @@ jobs:
         with:
           tofu_version: 1.8.1
 
+      - name: Cache OpenTofu providers
+        uses: actions/cache@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-tofu-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tofu-
+
+      - name: Set provider cache dir
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+
       - name: Install Terragrunt
         run: |
           TG_VERSION="0.68.4"
