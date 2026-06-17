@@ -20,7 +20,7 @@ resource "azurerm_container_registry" "lz-acr" {
   admin_enabled       = var.admin_enabled
 
   network_rule_set {
-    default_action = "Deny"
+    default_action = "Allow"
   }
 
   tags = var.tags
