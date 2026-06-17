@@ -26,6 +26,14 @@ resource "azurerm_container_registry" "lz-acr" {
   tags = var.tags
 }
 
+resource "azurerm_role_assignment" "acr" {
+  for_each = var.role_assignments
+
+  scope                = azurerm_container_registry.lz-acr.id
+  role_definition_name = each.value.role
+  principal_id         = each.value.principal_id
+}
+
 resource "azurerm_private_dns_zone" "lz-acr-dns" {
   name                = "privatelink.azurecr.io"
   resource_group_name = var.resource_group_name
