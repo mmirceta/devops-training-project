@@ -166,32 +166,52 @@ jobs:
         if: steps.plan.outcome == 'failure'
         run: exit 1
 
+####################### DOCKER IMAGE SCAN #######################
+
   docker-image-scan:
     runs-on: ubuntu-latest
+    environment: dev
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: Validate Docker Compose config
-        run: docker compose config
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
-      - name: Build Docker images
-        run: docker compose build
-
-      - name: Trivy scan Docker images
+      - name: Debug Azure identity and ACR
         run: |
-          set -e
+          az account show
+          az acr show --name acrdevtraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
 
-          images=$(docker compose config --images | sort -u)
+      - name: Login to ACR
+        run: az acr login --name acrdevtraining
 
-          for image in $images; do
-            echo "Scanning image: $image"
+      - name: Build image
+        run: |
+          docker build \
+            --pull \
+            --no-cache \
+            -f docker/nginx/Dockerfile.nginx \
+            -t acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            docker/nginx
 
-            docker run --rm \
-              -v /var/run/docker.sock:/var/run/docker.sock \
-              aquasec/trivy:latest image \
-              --exit-code 1 \
-              --severity HIGH,CRITICAL \
-              --ignore-unfixed \
-              "$image"
-          done
+      - name: Show built image
+        run: docker images acrdevtraining.azurecr.io/docker-web
+
+      - name: Push image to ACR
+        run: |
+          docker push acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+
+      - name: Trivy scan pushed image
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --exit-code 1 \
+            --severity HIGH,CRITICAL \
+            acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
