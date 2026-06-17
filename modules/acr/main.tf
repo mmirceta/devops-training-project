@@ -20,10 +20,18 @@ resource "azurerm_container_registry" "lz-acr" {
   admin_enabled       = var.admin_enabled
 
   network_rule_set {
-    default_action = "Deny"
+    default_action = "Allow"
   }
 
   tags = var.tags
+}
+
+resource "azurerm_role_assignment" "acr" {
+  for_each = var.role_assignments
+
+  scope                = azurerm_container_registry.lz-acr.id
+  role_definition_name = each.value.role
+  principal_id         = each.value.principal_id
 }
 
 resource "azurerm_private_dns_zone" "lz-acr-dns" {
