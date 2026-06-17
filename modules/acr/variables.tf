@@ -31,3 +31,11 @@ variable "vnet_id" {
 variable "tags" {
   type = map(string)
 }
+
+variable "role_assignments" {
+  type = map(object({
+    principal_id = string
+    role         = string
+  }))
+  default = {}
+}

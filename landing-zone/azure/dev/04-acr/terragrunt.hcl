@@ -47,4 +47,15 @@ inputs = {
     environment = local.env
     project     = "devops-training"
   }
+
+  role_assignments = {
+    dev-push = {
+      principal_id = "7b3cbd18-ce27-4341-b641-af130f809aff"
+      role         = "AcrPush"
+    }
+    prod-pull = {
+      principal_id = "9b172d4e-a694-4ffa-a333-bd5bd20065e0"
+      role         = "AcrPull"
+    }
+  }
 }
