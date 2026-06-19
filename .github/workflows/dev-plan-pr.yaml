@@ -198,10 +198,10 @@ jobs:
       - name: Debug Azure identity and ACR
         run: |
           az account show
-          az acr show --name acrdevtraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
+          az acr show --name acrbootstraptraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
 
       - name: Login to ACR
-        run: az acr login --name acrdevtraining
+        run: az acr login --name acrbootstraptraining
 
       - name: Build image
         run: |
@@ -209,15 +209,15 @@ jobs:
             --pull \
             --no-cache \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            -t acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
             docker/nginx
 
       - name: Show built image
-        run: docker images acrdevtraining.azurecr.io/docker-web
+        run: docker images acrbootstraptraining.azurecr.io/docker-web
 
       - name: Push image to ACR
         run: |
-          docker push acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+          docker push acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
 
       - name: Trivy scan pushed image
         run: |
@@ -227,4 +227,4 @@ jobs:
             --scanners vuln \
             --exit-code 1 \
             --severity HIGH,CRITICAL \
-            acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+            acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
