@@ -98,7 +98,17 @@ jobs:
           import re
           from pathlib import Path
 
-          plan = Path("plan.txt").read_text(errors="ignore")
+          raw = Path("plan.txt").read_text(errors="ignore")
+
+          # Strip ANSI escape codes (Terragrunt colours its own log lines
+          # regardless of -no-color, which only affects tofu output)
+          clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
+
+          # Terragrunt wraps every tofu line as:
+          #   HH:MM:SS.mmm  STDOUT  [module]  tofu: <actual line>
+          # Extract just the tofu content so the parser sees plain plan text
+          tofu_re = re.compile(r'^\S+\s+STDOUT\s+\[\S+\]\s+tofu:\s?(.*)', re.MULTILINE)
+          plan = '\n'.join(m.group(1) for m in tofu_re.finditer(clean))
 
           groups = {"create": [], "update": [], "replace": [], "destroy": []}
 
@@ -123,55 +133,37 @@ jobs:
               start    = m.start()
               end      = matches[i + 1].start() if i + 1 < len(matches) else len(plan)
               chunk    = plan[start:end]
-              # Trim at the "Plan: X to add" summary line so we don't bleed into Terragrunt metadata
               summary  = re.search(r'\nPlan: \d+', chunk)
               if summary:
                   chunk = chunk[:summary.start()]
               groups[ACTION_MAP[action]].append((resource, chunk.strip()))
 
-          def section(title, icon, items):
-              out = [f"## {icon} {title} ({len(items)})", ""]
+          def section(title, items):
               if not items:
-                  out.append("_None_")
-                  out.append("")
-                  return out
-
+                  return []
+              out = [f"## {title}", ""]
               for resource, block in items:
-                  out.append(f"<details>")
-                  out.append(f"<summary><code>{resource}</code></summary>")
+                  out.append("<details>")
+                  out.append(f"<summary>{resource}</summary>")
                   out.append("")
                   out.append("```hcl")
-                  out.append(block.strip())
+                  out.append(block)
                   out.append("```")
                   out.append("")
                   out.append("</details>")
                   out.append("")
               return out
 
-          comment = []
-          comment.append("# Terragrunt Plan - Dev")
-          comment.append("")
-          comment.append("| Action | Count |")
-          comment.append("|---|---:|")
-          comment.append(f"| Create | {len(groups['create'])} |")
-          comment.append(f"| Update | {len(groups['update'])} |")
-          comment.append(f"| Replace | {len(groups['replace'])} |")
-          comment.append(f"| Destroy | {len(groups['destroy'])} |")
-          comment.append("")
+          modified = groups["update"] + groups["replace"]
 
-          comment += section("Resources to create", "🟢", groups["create"])
-          comment += section("Resources to update", "🟡", groups["update"])
-          comment += section("Resources to replace", "🟠", groups["replace"])
-          comment += section("Resources to destroy", "🔴", groups["destroy"])
+          comment = ["# Terragrunt Plan - Dev", ""]
+          comment += section("Create",           groups["create"])
+          comment += section("Destroy",          groups["destroy"])
+          comment += section("Update / Replace", modified)
 
-          comment.append("<details>")
-          comment.append("<summary>Full raw plan</summary>")
-          comment.append("")
-          comment.append("```hcl")
-          comment.append(plan[-50000:])
-          comment.append("```")
-          comment.append("")
-          comment.append("</details>")
+          if not groups["create"] and not groups["destroy"] and not modified:
+              comment.append("_No changes._")
+              comment.append("")
 
           Path("comment.md").write_text("\n".join(comment))
           PY
