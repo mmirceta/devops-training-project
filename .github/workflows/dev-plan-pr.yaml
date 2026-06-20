@@ -88,7 +88,7 @@ jobs:
         working-directory: landing-zone/azure/dev
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
 ### comment plan
 
@@ -100,27 +100,34 @@ jobs:
 
           plan = Path("plan.txt").read_text(errors="ignore")
 
-          groups = {
-              "create": [],
-              "update": [],
-              "replace": [],
-              "destroy": [],
+          groups = {"create": [], "update": [], "replace": [], "destroy": []}
+
+          ACTION_MAP = {
+              "will be created":          "create",
+              "will be updated in-place": "update",
+              "must be replaced":         "replace",
+              "will be destroyed":        "destroy",
           }
 
-          pattern = re.compile(
-              r'(# ([^\n]+?) (will be created|will be updated in-place|must be replaced|will be destroyed)\n.*?)(?=\n\s*# |\nPlan:|\Z)',
-              re.S
+          # Pass 1: locate every resource header line
+          header_re = re.compile(
+              r'^[ \t]*# (\S+) (will be created|will be updated in-place|must be replaced|will be destroyed)$',
+              re.MULTILINE,
           )
+          matches = list(header_re.finditer(plan))
 
-          for block, resource, action in pattern.findall(plan):
-              if action == "will be created":
-                  groups["create"].append((resource, block))
-              elif action == "will be updated in-place":
-                  groups["update"].append((resource, block))
-              elif action == "must be replaced":
-                  groups["replace"].append((resource, block))
-              elif action == "will be destroyed":
-                  groups["destroy"].append((resource, block))
+          # Pass 2: slice the text between consecutive headers to get each diff block
+          for i, m in enumerate(matches):
+              resource = m.group(1)
+              action   = m.group(2)
+              start    = m.start()
+              end      = matches[i + 1].start() if i + 1 < len(matches) else len(plan)
+              chunk    = plan[start:end]
+              # Trim at the "Plan: X to add" summary line so we don't bleed into Terragrunt metadata
+              summary  = re.search(r'\nPlan: \d+', chunk)
+              if summary:
+                  chunk = chunk[:summary.start()]
+              groups[ACTION_MAP[action]].append((resource, chunk.strip()))
 
           def section(title, icon, items):
               out = [f"## {icon} {title} ({len(items)})", ""]
