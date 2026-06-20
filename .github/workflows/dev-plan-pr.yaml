@@ -79,7 +79,7 @@ jobs:
 
       - name: Terragrunt validate dev
         working-directory: landing-zone/azure/dev
-        run: terragrunt run-all validate --terragrunt-non-interactive
+        run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
 ### plan
 
@@ -88,7 +88,7 @@ jobs:
         working-directory: landing-zone/azure/dev
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
 ### comment plan
 
@@ -100,27 +100,34 @@ jobs:
 
           plan = Path("plan.txt").read_text(errors="ignore")
 
-          groups = {
-              "create": [],
-              "update": [],
-              "replace": [],
-              "destroy": [],
+          groups = {"create": [], "update": [], "replace": [], "destroy": []}
+
+          ACTION_MAP = {
+              "will be created":          "create",
+              "will be updated in-place": "update",
+              "must be replaced":         "replace",
+              "will be destroyed":        "destroy",
           }
 
-          pattern = re.compile(
-              r'(# ([^\n]+?) (will be created|will be updated in-place|must be replaced|will be destroyed)\n.*?)(?=\n\s*# |\nPlan:|\Z)',
-              re.S
+          # Pass 1: locate every resource header line
+          header_re = re.compile(
+              r'^[ \t]*# (\S+) (will be created|will be updated in-place|must be replaced|will be destroyed)$',
+              re.MULTILINE,
           )
+          matches = list(header_re.finditer(plan))
 
-          for block, resource, action in pattern.findall(plan):
-              if action == "will be created":
-                  groups["create"].append((resource, block))
-              elif action == "will be updated in-place":
-                  groups["update"].append((resource, block))
-              elif action == "must be replaced":
-                  groups["replace"].append((resource, block))
-              elif action == "will be destroyed":
-                  groups["destroy"].append((resource, block))
+          # Pass 2: slice the text between consecutive headers to get each diff block
+          for i, m in enumerate(matches):
+              resource = m.group(1)
+              action   = m.group(2)
+              start    = m.start()
+              end      = matches[i + 1].start() if i + 1 < len(matches) else len(plan)
+              chunk    = plan[start:end]
+              # Trim at the "Plan: X to add" summary line so we don't bleed into Terragrunt metadata
+              summary  = re.search(r'\nPlan: \d+', chunk)
+              if summary:
+                  chunk = chunk[:summary.start()]
+              groups[ACTION_MAP[action]].append((resource, chunk.strip()))
 
           def section(title, icon, items):
               out = [f"## {icon} {title} ({len(items)})", ""]
@@ -198,10 +205,10 @@ jobs:
       - name: Debug Azure identity and ACR
         run: |
           az account show
-          az acr show --name acrdevtraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
+          az acr show --name acrbootstraptraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
 
       - name: Login to ACR
-        run: az acr login --name acrdevtraining
+        run: az acr login --name acrbootstraptraining
 
       - name: Build image
         run: |
@@ -209,15 +216,15 @@ jobs:
             --pull \
             --no-cache \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            -t acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
             docker/nginx
 
       - name: Show built image
-        run: docker images acrdevtraining.azurecr.io/docker-web
+        run: docker images acrbootstraptraining.azurecr.io/docker-web
 
       - name: Push image to ACR
         run: |
-          docker push acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+          docker push acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
 
       - name: Trivy scan pushed image
         run: |
@@ -227,4 +234,4 @@ jobs:
             --scanners vuln \
             --exit-code 1 \
             --severity HIGH,CRITICAL \
-            acrdevtraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+            acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}

@@ -28,16 +28,16 @@ dependency "network" {
   }
 }
 
-dependency "acr" {
-  config_path = "../04-acr/"
-  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
-  mock_outputs = {
-    id                  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.ContainerRegistry/registries/acrdevtrainingmm"
-    name                = "acrdevtrainingmm"
-    login_server        = "acrdevtrainingmm.azurecr.io"
-    private_endpoint_ip = "10.20.3.4"
-  }
-}
+# dependency "acr" {
+#   config_path = "../04-acr/"
+#   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+#   mock_outputs = {
+#     id                  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.ContainerRegistry/registries/acrdevtrainingmm"
+#     name                = "acrdevtrainingmm"
+#     login_server        = "acrdevtrainingmm.azurecr.io"
+#     private_endpoint_ip = "10.20.3.4"
+#   }
+# }
 
 locals {
   env = "dev"
