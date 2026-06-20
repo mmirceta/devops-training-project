@@ -79,7 +79,7 @@ jobs:
 
       - name: Terragrunt validate dev
         working-directory: landing-zone/azure/dev
-        run: terragrunt run-all validate --terragrunt-non-interactive
+        run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
 ### plan
 
