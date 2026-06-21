@@ -1,0 +1,43 @@
+name: Build and Push Image (Dev)
+
+on:
+  push:
+    branches:
+      - dev
+    paths:
+      - "docker/**"
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    environment: dev
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Login to ACR
+        run: az acr login --name acrbootstraptraining
+
+      - name: Build image
+        run: |
+          docker build \
+            -f docker/nginx/Dockerfile.nginx \
+            -t acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }} \
+            -t acrbootstraptraining.azurecr.io/docker-web:dev-latest \
+            docker/nginx
+
+      - name: Push image
+        run: |
+          docker push acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }}
+          docker push acrbootstraptraining.azurecr.io/docker-web:dev-latest
