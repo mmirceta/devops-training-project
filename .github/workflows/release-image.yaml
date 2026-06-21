@@ -10,11 +10,13 @@ permissions:
   id-token: write
 
 jobs:
-  tag-release:
+  release:
     runs-on: ubuntu-latest
     environment: dev
 
     steps:
+      - uses: actions/checkout@v4
+
       - name: Azure Login
         uses: azure/login@v2
         with:
@@ -25,19 +27,19 @@ jobs:
       - name: Login to ACR
         run: az acr login --name acrbootstraptraining
 
-      - name: Pull dev-latest image
-        run: docker pull acrbootstraptraining.azurecr.io/docker-web:dev-latest
-
-      - name: Tag with version
+      - name: Build image
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
-          docker tag \
-            acrbootstraptraining.azurecr.io/docker-web:dev-latest \
-            acrbootstraptraining.azurecr.io/docker-web:${VERSION}
+          docker build \
+            -f docker/nginx/Dockerfile.nginx \
+            -t acrbootstraptraining.azurecr.io/docker-web:${VERSION} \
+            -t acrbootstraptraining.azurecr.io/docker-web:latest \
+            docker/nginx
 
-      - name: Push versioned tag
+      - name: Push image
         run: |
           VERSION="${{ github.ref_name }}"
           VERSION="${VERSION#v}"
           docker push acrbootstraptraining.azurecr.io/docker-web:${VERSION}
+          docker push acrbootstraptraining.azurecr.io/docker-web:latest
