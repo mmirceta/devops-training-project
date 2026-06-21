@@ -182,25 +182,9 @@ jobs:
 
   docker-image-scan:
     runs-on: ubuntu-latest
-    environment: dev
 
     steps:
       - uses: actions/checkout@v4
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.ARM_CLIENT_ID }}
-          tenant-id: ${{ vars.ARM_TENANT_ID }}
-          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
-
-      - name: Debug Azure identity and ACR
-        run: |
-          az account show
-          az acr show --name acrbootstraptraining --query "{loginServer:loginServer, publicNetworkAccess:publicNetworkAccess, networkRuleSet:networkRuleSet.defaultAction}" -o table
-
-      - name: Login to ACR
-        run: az acr login --name acrbootstraptraining
 
       - name: Build image
         run: |
@@ -208,22 +192,31 @@ jobs:
             --pull \
             --no-cache \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }} \
+            -t docker-web:pr-${{ github.sha }} \
             docker/nginx
 
-      - name: Show built image
-        run: docker images acrbootstraptraining.azurecr.io/docker-web
+      - name: Trivy scan
+        uses: aquasecurity/trivy-action@0.31.0
+        with:
+          image-ref: docker-web:pr-${{ github.sha }}
+          format: table
+          output: trivy-report.txt
+          scanners: vuln
+          severity: HIGH,CRITICAL
+          exit-code: '0'
 
-      - name: Push image to ACR
+      - name: Format Trivy report
         run: |
-          docker push acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+          {
+            echo "## Trivy Vulnerability Scan"
+            echo ""
+            echo '```'
+            cat trivy-report.txt
+            echo '```'
+          } > trivy-comment.md
 
-      - name: Trivy scan pushed image
-        run: |
-          docker run --rm \
-            -v /var/run/docker.sock:/var/run/docker.sock \
-            aquasec/trivy:latest image \
-            --scanners vuln \
-            --exit-code 1 \
-            --severity HIGH,CRITICAL \
-            acrbootstraptraining.azurecr.io/docker-web:pr-${{ github.event.pull_request.number }}-${{ github.sha }}
+      - name: Post Trivy report as PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: trivy-scan
+          path: trivy-comment.md
