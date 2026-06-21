@@ -70,7 +70,7 @@ jobs:
 
       - name: Terragrunt validate prod
         working-directory: landing-zone/azure/prod
-        run: terragrunt run-all validate --terragrunt-non-interactive
+        run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
 ### plan
 
@@ -79,37 +79,81 @@ jobs:
         working-directory: landing-zone/azure/prod
         continue-on-error: true
         run: |
-          terragrunt run-all plan --terragrunt-non-interactive -no-color 2>&1 | tee $GITHUB_WORKSPACE/plan.txt
-          exit ${PIPESTATUS[0]}
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
 ### comment plan
 
       - name: Create plan summary
         run: |
-          CREATES=$(grep -c "will be created" plan.txt || true)
-          UPDATES=$(grep -c "will be updated" plan.txt || true)
-          DESTROYS=$(grep -c "will be destroyed" plan.txt || true)
-          REPLACED=$(grep -c "must be replaced" plan.txt || true)
+          python3 <<'PY'
+          import re
+          from pathlib import Path
 
-          {
-            echo "## Terragrunt Plan - Prod"
-            echo ""
-            echo "| Action | Count |"
-            echo "|---|---:|"
-            echo "| Create | $CREATES |"
-            echo "| Update | $UPDATES |"
-            echo "| Destroy | $DESTROYS |"
-            echo "| Replace | $REPLACED |"
-            echo ""
-            echo "<details>"
-            echo "<summary>Full plan output</summary>"
-            echo ""
-            echo '```hcl'
-            cat plan.txt
-            echo '```'
-            echo ""
-            echo "</details>"
-          } > comment.md
+          raw = Path("plan.txt").read_text(errors="ignore")
+
+          # Strip ANSI escape codes
+          clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
+
+          # Extract tofu lines from Terragrunt log prefix format:
+          # "HH:MM:SS.mmm  STDOUT  [module]  tofu: <actual line>"
+          tofu_re = re.compile(r'^\S+\s+STDOUT\s+\[\S+\]\s+tofu:\s?(.*)', re.MULTILINE)
+          plan = '\n'.join(m.group(1) for m in tofu_re.finditer(clean))
+
+          groups = {"create": [], "update": [], "replace": [], "destroy": []}
+
+          ACTION_MAP = {
+              "will be created":          "create",
+              "will be updated in-place": "update",
+              "must be replaced":         "replace",
+              "will be destroyed":        "destroy",
+          }
+
+          header_re = re.compile(
+              r'^[ \t]*# (\S+) (will be created|will be updated in-place|must be replaced|will be destroyed)$',
+              re.MULTILINE,
+          )
+          matches = list(header_re.finditer(plan))
+
+          for i, m in enumerate(matches):
+              resource = m.group(1)
+              action   = m.group(2)
+              start    = m.start()
+              end      = matches[i + 1].start() if i + 1 < len(matches) else len(plan)
+              chunk    = plan[start:end]
+              summary  = re.search(r'\nPlan: \d+', chunk)
+              if summary:
+                  chunk = chunk[:summary.start()]
+              groups[ACTION_MAP[action]].append((resource, chunk.strip()))
+
+          def section(title, items):
+              if not items:
+                  return []
+              out = [f"## {title}", ""]
+              for resource, block in items:
+                  out.append("<details>")
+                  out.append(f"<summary>{resource}</summary>")
+                  out.append("")
+                  out.append("```hcl")
+                  out.append(block)
+                  out.append("```")
+                  out.append("")
+                  out.append("</details>")
+                  out.append("")
+              return out
+
+          modified = groups["update"] + groups["replace"]
+
+          comment = ["# Terragrunt Plan - Prod", ""]
+          comment += section("Create",           groups["create"])
+          comment += section("Destroy",          groups["destroy"])
+          comment += section("Update / Replace", modified)
+
+          if not groups["create"] and not groups["destroy"] and not modified:
+              comment.append("_No changes._")
+              comment.append("")
+
+          Path("comment.md").write_text("\n".join(comment))
+          PY
 
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
