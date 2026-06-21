@@ -1,5 +1,5 @@
 # nginx image
-FROM nginx:alpine
+FROM nginx:alpine3.21
 
 RUN apk update && apk upgrade --no-cache
 
