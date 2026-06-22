@@ -28,14 +28,15 @@ jobs:
             docker/nginx
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          image-ref: docker-web:pr-${{ github.sha }}
-          format: table
-          output: trivy-report.txt
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          exit-code: '0'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --exit-code 0 \
+            docker-web:pr-${{ github.sha }} > trivy-report.txt
 
       - name: Format Trivy report
         run: |
