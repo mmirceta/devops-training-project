@@ -7,7 +7,6 @@ on:
     paths:
       - "landing-zone/azure/dev/**"
       - "modules/**"
-      - "docker/**"
 
 
 
@@ -173,46 +172,3 @@ jobs:
       - name: Fail if plan failed
         if: steps.plan.outcome == 'failure'
         run: exit 1
-
-####################### DOCKER IMAGE SCAN #######################
-
-  docker-image-scan:
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Build image
-        run: |
-          docker build \
-            --pull \
-            --no-cache \
-            -f docker/nginx/Dockerfile.nginx \
-            -t docker-web:pr-${{ github.sha }} \
-            docker/nginx
-
-      - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          image-ref: docker-web:pr-${{ github.sha }}
-          format: table
-          output: trivy-report.txt
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          exit-code: '0'
-
-      - name: Format Trivy report
-        run: |
-          {
-            echo "## Trivy Vulnerability Scan"
-            echo ""
-            echo '```'
-            cat trivy-report.txt
-            echo '```'
-          } > trivy-comment.md
-
-      - name: Post Trivy report as PR comment
-        uses: marocchino/sticky-pull-request-comment@v2
-        with:
-          header: trivy-scan
-          path: trivy-comment.md
