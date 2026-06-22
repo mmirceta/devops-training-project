@@ -43,6 +43,8 @@ jobs:
           {
             echo "## Trivy Vulnerability Scan"
             echo ""
+            echo "**Image:** \`docker-web:pr-${{ github.sha }}\`"
+            echo ""
             echo '```'
             cat trivy-report.txt
             echo '```'
