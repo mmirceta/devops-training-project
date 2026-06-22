@@ -28,19 +28,43 @@ jobs:
             docker/nginx
 
       - name: Trivy scan
-        uses: aquasecurity/trivy-action@0.31.0
-        with:
-          image-ref: docker-web:pr-${{ github.sha }}
-          format: table
-          output: trivy-report.txt
-          scanners: vuln
-          severity: HIGH,CRITICAL
-          exit-code: '0'
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity HIGH,CRITICAL \
+            --format table \
+            --exit-code 0 \
+            docker-web:pr-${{ github.sha }} > trivy-report.txt
+
+      - name: Check CRITICAL vulnerabilities with fix available
+        id: critical-check
+        continue-on-error: true
+        run: |
+          docker run --rm \
+            -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy:latest image \
+            --scanners vuln \
+            --severity CRITICAL \
+            --ignore-unfixed \
+            --exit-code 1 \
+            docker-web:pr-${{ github.sha }}
 
       - name: Format Trivy report
         run: |
           {
             echo "## Trivy Vulnerability Scan"
+            echo ""
+            if [ "${{ steps.critical-check.outcome }}" == "failure" ]; then
+              echo "> [!CAUTION]"
+              echo "> CRITICAL vulnerabilities with fixes available found. Merge is blocked."
+            else
+              echo "> [!NOTE]"
+              echo "> No CRITICAL vulnerabilities with fixes available."
+            fi
+            echo ""
+            echo "**Image:** \`docker-web:pr-${{ github.sha }}\`"
             echo ""
             echo '```'
             cat trivy-report.txt
@@ -52,3 +76,7 @@ jobs:
         with:
           header: trivy-scan
           path: trivy-comment.md
+
+      - name: Fail if CRITICAL vulnerabilities with fix found
+        if: steps.critical-check.outcome == 'failure'
+        run: exit 1
