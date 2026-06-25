@@ -1,14 +1,14 @@
-name: Plan Dev PR
+name: Plan PR
 
 on:
   pull_request:
     branches:
       - dev
+      - main
     paths:
       - "landing-zone/azure/dev/**"
+      - "landing-zone/azure/prod/**"
       - "modules/**"
-
-
 
 permissions:
   contents: read
@@ -17,9 +17,9 @@ permissions:
   id-token: write
 
 jobs:
-  plan-dev:
+  plan:
     runs-on: ubuntu-latest
-    environment: dev
+    environment: ${{ github.base_ref == 'main' && 'prod' || 'dev' }}
 
     env:
       ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
@@ -27,7 +27,6 @@ jobs:
       ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
       TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
       ARM_USE_OIDC: true
-      
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
 
     steps:
@@ -64,44 +63,35 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-### check format
-
       - name: OpenTofu fmt check
         run: tofu fmt -check -recursive
 
       - name: Terragrunt hclfmt check
         run: terragrunt hclfmt --check --terragrunt-working-dir .
 
-      - name: Terragrunt validate dev
-        working-directory: landing-zone/azure/dev
+      - name: Terragrunt validate
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
-### plan
-
-      - name: Terragrunt plan dev
+      - name: Terragrunt plan
         id: plan
-        working-directory: landing-zone/azure/dev
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         continue-on-error: true
         run: |
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
-### comment plan
-
       - name: Create plan summary
         run: |
           python3 <<'PY'
-          import re
+          import re, os
           from pathlib import Path
 
+          base_ref = os.environ.get("GITHUB_BASE_REF", "dev")
+          env = "prod" if base_ref == "main" else "dev"
           raw = Path("plan.txt").read_text(errors="ignore")
 
-          # Strip ANSI escape codes (Terragrunt colours its own log lines
-          # regardless of -no-color, which only affects tofu output)
           clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
 
-          # Terragrunt wraps every tofu line as:
-          #   HH:MM:SS.mmm  STDOUT  [module]  tofu: <actual line>
-          # Extract just the tofu content so the parser sees plain plan text
           tofu_re = re.compile(r'^\S+\s+STDOUT\s+\[\S+\]\s+tofu:\s?(.*)', re.MULTILINE)
           plan = '\n'.join(m.group(1) for m in tofu_re.finditer(clean))
 
@@ -114,14 +104,12 @@ jobs:
               "will be destroyed":        "destroy",
           }
 
-          # Pass 1: locate every resource header line
           header_re = re.compile(
               r'^[ \t]*# (\S+) (will be created|will be updated in-place|must be replaced|will be destroyed)$',
               re.MULTILINE,
           )
           matches = list(header_re.finditer(plan))
 
-          # Pass 2: slice the text between consecutive headers to get each diff block
           for i, m in enumerate(matches):
               resource = m.group(1)
               action   = m.group(2)
@@ -151,7 +139,7 @@ jobs:
 
           modified = groups["update"] + groups["replace"]
 
-          comment = ["# Terragrunt Plan - Dev", ""]
+          comment = [f"# Terragrunt Plan - {env.capitalize()}", ""]
           comment += section("Create",           groups["create"])
           comment += section("Destroy",          groups["destroy"])
           comment += section("Update / Replace", modified)
@@ -166,7 +154,7 @@ jobs:
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: terragrunt-plan-dev
+          header: terragrunt-plan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
           path: comment.md
 
       - name: Fail if plan failed
