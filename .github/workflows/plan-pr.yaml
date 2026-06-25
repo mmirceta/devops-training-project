@@ -19,19 +19,7 @@ permissions:
 jobs:
   plan:
     runs-on: ubuntu-latest
-    environment: ${{ matrix.env }}
-
-    if: |
-      (matrix.env == 'dev' && github.base_ref == 'dev') ||
-      (matrix.env == 'prod' && github.base_ref == 'main')
-
-    strategy:
-      matrix:
-        include:
-          - env: dev
-            working_dir: landing-zone/azure/dev
-          - env: prod
-            working_dir: landing-zone/azure/prod
+    environment: ${{ github.base_ref == 'main' && 'prod' || 'dev' }}
 
     env:
       ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
@@ -82,12 +70,12 @@ jobs:
         run: terragrunt hclfmt --check --terragrunt-working-dir .
 
       - name: Terragrunt validate
-        working-directory: ${{ matrix.working_dir }}
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
       - name: Terragrunt plan
         id: plan
-        working-directory: ${{ matrix.working_dir }}
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         continue-on-error: true
         run: |
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
@@ -95,10 +83,11 @@ jobs:
       - name: Create plan summary
         run: |
           python3 <<'PY'
-          import re
+          import re, os
           from pathlib import Path
 
-          env = "${{ matrix.env }}"
+          base_ref = os.environ.get("GITHUB_BASE_REF", "dev")
+          env = "prod" if base_ref == "main" else "dev"
           raw = Path("plan.txt").read_text(errors="ignore")
 
           clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
@@ -165,7 +154,7 @@ jobs:
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: terragrunt-plan-${{ matrix.env }}
+          header: terragrunt-plan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
           path: comment.md
 
       - name: Fail if plan failed
