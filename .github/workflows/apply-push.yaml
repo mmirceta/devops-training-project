@@ -15,7 +15,7 @@ permissions:
   id-token: write
 
 jobs:
-  apply:
+  plan:
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
 
@@ -61,6 +61,70 @@ jobs:
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
+      - name: Terragrunt plan
+        working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+        run: terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -out=tfplan
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+          path: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+          include-hidden-files: true
+
+  apply:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
+      ARM_USE_OIDC: true
+      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.1
+
+      - name: Restore provider cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-tofu-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tofu-
+
+      - name: Set provider cache dir
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+
+      - name: Install Terragrunt
+        run: |
+          TG_VERSION="0.68.4"
+          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          chmod +x terragrunt
+          sudo mv terragrunt /usr/local/bin/terragrunt
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+          path: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+
       - name: Terragrunt apply
         working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-        run: terragrunt run-all apply --terragrunt-non-interactive
+        run: terragrunt run-all apply --terragrunt-non-interactive --terragrunt-parallelism 1 tfplan
