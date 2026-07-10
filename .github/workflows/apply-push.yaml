@@ -129,17 +129,5 @@ jobs:
         run: find landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
 
       - name: Terragrunt apply
-        run: |
-          ENV="${{ github.ref_name == 'main' && 'prod' || 'dev' }}"
-          WORKING_DIR="landing-zone/azure/${ENV}"
-          for module in $(ls "${WORKING_DIR}" | sort); do
-            module_dir="${WORKING_DIR}/${module}"
-            [ -d "$module_dir" ] || continue
-            plan_file=$(find "${module_dir}/.terragrunt-cache" -name "tfplan" -type f 2>/dev/null | head -1)
-            [ -n "$plan_file" ] || continue
-            echo "=== Applying ${module} ==="
-            terragrunt apply \
-              --terragrunt-non-interactive \
-              --terragrunt-working-dir "${module_dir}" \
-              "$(realpath "${plan_file}")"
-          done
+        working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+        run: terragrunt run-all apply --terragrunt-non-interactive --terragrunt-parallelism 1 tfplan
