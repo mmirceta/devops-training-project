@@ -7,3 +7,4 @@ test #5 - new plan comment i
 test #6 - added docker image check
 test #7 - test comment
 test #8 - test one workflow for dev and prod  
+test #9 - test artifacts
