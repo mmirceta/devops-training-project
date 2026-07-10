@@ -125,6 +125,9 @@ jobs:
           name: tfplan-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
           path: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
 
+      - name: Restore provider execute permissions
+        run: find landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
+
       - name: Terragrunt apply
         run: |
           ENV="${{ github.ref_name == 'main' && 'prod' || 'dev' }}"
