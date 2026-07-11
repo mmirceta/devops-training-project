@@ -73,6 +73,62 @@ jobs:
         working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Checkov scan
+        id: checkov
+        continue-on-error: true
+        run: |
+          checkov \
+            -d modules \
+            --framework terraform \
+            --output cli \
+            --compact \
+            --no-guide \
+            > checkov-report.txt 2>&1
+
+      - name: Format Checkov comment
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          outcome = "${{ steps.checkov.outcome }}"
+          report = Path("checkov-report.txt").read_text(errors="ignore")
+
+          if len(report) > 50000:
+              report = report[:50000] + "\n... (truncated)"
+
+          lines = ["## Checkov IaC Scan", ""]
+          if outcome == "failure":
+              lines += ["> [!CAUTION]", "> Policy violations found.", ""]
+          else:
+              lines += ["> [!NOTE]", "> No policy violations found.", ""]
+
+          lines += [
+              "<details>",
+              "<summary>Full report</summary>",
+              "",
+              "```",
+              report,
+              "```",
+              "",
+              "</details>",
+          ]
+
+          Path("checkov-comment.md").write_text("\n".join(lines))
+          PY
+
+      - name: Post Checkov report as PR comment
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: checkov-scan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
+          path: checkov-comment.md
+
+      - name: Fail if Checkov violations found
+        if: steps.checkov.outcome == 'failure'
+        run: exit 1
+
       - name: Terragrunt plan
         id: plan
         working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
