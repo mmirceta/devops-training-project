@@ -16,7 +16,7 @@ dependency "rg" {
   config_path = "../01-rg/"
   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
   mock_outputs = {
-    name = "rg-dev-training"
+    name = "rg-devops-training-dev"
   }
 }
 
@@ -25,12 +25,12 @@ dependency "network" {
   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
   mock_outputs = {
     subnet_ids = {
-      mgmt = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-mgmt-dev"
-      app  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-app-dev"
-      data = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-data-dev"
+      mgmt = "/subscriptions/d960facb-8e1a-44d3-be23-1c460b7077ee/resourceGroups/rg-devops-training-dev/providers/Microsoft.Network/virtualNetworks/lz-dev-vnet/subnets/snet-mgmt-dev"
+      app  = "/subscriptions/d960facb-8e1a-44d3-be23-1c460b7077ee/resourceGroups/rg-devops-training-dev/providers/Microsoft.Network/virtualNetworks/lz-dev-vnet/subnets/snet-app-dev"
+      data = "/subscriptions/d960facb-8e1a-44d3-be23-1c460b7077ee/resourceGroups/rg-devops-training-dev/providers/Microsoft.Network/virtualNetworks/lz-dev-vnet/subnets/snet-data-dev"
     }
-    vnet_id   = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training"
-    vnet_name = "vnet-dev-training"
+    vnet_id   = "/subscriptions/d960facb-8e1a-44d3-be23-1c460b7077ee/resourceGroups/rg-devops-training-dev/providers/Microsoft.Network/virtualNetworks/lz-dev-vnet"
+    vnet_name = "lz-dev-vnet"
   }
 }
 
