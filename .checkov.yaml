@@ -1,0 +1,41 @@
+skip-check:
+  # --- VM: password authentication (intentional for training) ---
+  - CKV_AZURE_1     # basic auth / no SSH key requirement
+  - CKV_AZURE_149   # password authentication enabled
+  - CKV_AZURE_178   # SSH keys for secure communication
+
+  # --- VM: public IP on NIC (intentional - SSH access to mgmt subnet) ---
+  - CKV_AZURE_119   # NIC has public IP
+
+  # --- VM: extension operations (no extensions installed; false positive) ---
+  - CKV_AZURE_50    # allow_extension_operations defaults to true
+
+  # --- ACR: enterprise / premium features not used in training ---
+  - CKV_AZURE_139   # disable public networking (runners push images, no fixed IP)
+  - CKV_AZURE_164   # trusted/signed images (content trust)
+  - CKV_AZURE_165   # geo-replication
+  - CKV_AZURE_166   # image quarantine
+  - CKV_AZURE_167   # retention policy for untagged manifests
+  - CKV_AZURE_233   # zone redundancy
+  - CKV_AZURE_237   # dedicated data endpoints
+
+  # --- KV: purge protection (disabled to allow destroy/recreate in training) ---
+  - CKV_AZURE_42    # key vault recoverable
+  - CKV_AZURE_110   # purge protection enabled
+
+  # --- KV: public network access (false positive - network_acls default_action=Deny + private endpoint) ---
+  - CKV_AZURE_189   # disable public network access
+
+  # --- SA: CI/CD needs access (GitHub runners have no fixed IP) ---
+  - CKV_AZURE_35    # default network action Deny (runners need state backend access)
+  - CKV_AZURE_59    # disallow public access
+  - CKV2_AZURE_40   # shared key authorization (required by Terraform state backend)
+
+  # --- SA: features not applicable to training ---
+  - CKV_AZURE_33    # queue service logging
+  - CKV_AZURE_206   # replication type (LRS is intentional for cost)
+  - CKV2_AZURE_1    # customer-managed key encryption
+  - CKV2_AZURE_21   # blob service read logging
+  - CKV2_AZURE_33   # private endpoint (SA uses subnet allowlist instead)
+  - CKV2_AZURE_38   # blob soft-delete
+  - CKV2_AZURE_41   # SAS expiration policy

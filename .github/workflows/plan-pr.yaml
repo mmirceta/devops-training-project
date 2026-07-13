@@ -85,7 +85,6 @@ jobs:
             --framework terraform \
             --output cli \
             --compact \
-            --no-guide \
             > checkov-report.txt 2>&1
 
       - name: Format Checkov comment
