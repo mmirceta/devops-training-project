@@ -14,6 +14,10 @@ permissions:
   contents: read
   id-token: write
 
+concurrency:
+  group: terragrunt-apply-${{ github.ref_name }}
+  cancel-in-progress: false
+
 jobs:
   plan:
     runs-on: ubuntu-latest
@@ -28,7 +32,10 @@ jobs:
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
       - name: Azure Login
         uses: azure/login@v2
@@ -37,7 +44,8 @@ jobs:
           tenant-id: ${{ vars.ARM_TENANT_ID }}
           subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
-      - uses: opentofu/setup-opentofu@v1
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: 1.8.1
 
@@ -57,23 +65,44 @@ jobs:
       - name: Install Terragrunt
         run: |
           TG_VERSION="0.68.4"
-          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          wget -O terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
       - name: Terragrunt plan
         working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-        run: terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -out=tfplan
+        run: |
+          terragrunt run-all plan \
+            --terragrunt-non-interactive \
+            --terragrunt-parallelism 1 \
+            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
+
+      - name: Show generated plans
+        run: find "$GITHUB_WORKSPACE/tfplans" -type f -print
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
-          name: tfplan-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-          path: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-          include-hidden-files: true
+          name: tfplan-${{ github.ref_name }}-${{ github.sha }}
+          path: ${{ github.workspace }}/tfplans
+          if-no-files-found: error
+          retention-days: 7
+
+  gate:
+    needs: plan
+    runs-on: ubuntu-latest
+    environment: ${{ github.ref_name == 'main' && 'prod-review' || 'dev-review' }}
+
+    steps:
+      - name: Approval completed
+        run: echo "Approved"
 
   apply:
-    needs: plan
+    needs:
+      - plan
+      - gate
+
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
 
@@ -86,7 +115,10 @@ jobs:
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout exact planned commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
 
       - name: Azure Login
         uses: azure/login@v2
@@ -95,7 +127,8 @@ jobs:
           tenant-id: ${{ vars.ARM_TENANT_ID }}
           subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
-      - uses: opentofu/setup-opentofu@v1
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
         with:
           tofu_version: 1.8.1
 
@@ -115,19 +148,31 @@ jobs:
       - name: Install Terragrunt
         run: |
           TG_VERSION="0.68.4"
-          wget -O terragrunt "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
+          wget -O terragrunt \
+            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
           chmod +x terragrunt
           sudo mv terragrunt /usr/local/bin/terragrunt
 
-      - name: Download plan artifact
+      - name: Download exact plan artifact
         uses: actions/download-artifact@v4
         with:
-          name: tfplan-${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-          path: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+          name: tfplan-${{ github.ref_name }}-${{ github.sha }}
+          path: ${{ github.workspace }}/tfplans
 
-      - name: Restore provider execute permissions
-        run: find landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }} -name "terraform-provider-*" -type f -exec chmod +x {} \;
+      - name: Verify downloaded plans
+        run: |
+          echo "Downloaded plan files:"
+          find "$GITHUB_WORKSPACE/tfplans" -type f -print
+
+          if ! find "$GITHUB_WORKSPACE/tfplans" -type f | grep -q .; then
+            echo "No plan files were downloaded."
+            exit 1
+          fi
 
       - name: Terragrunt apply
         working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-        run: terragrunt run-all apply --terragrunt-non-interactive --terragrunt-parallelism 1 tfplan
+        run: |
+          terragrunt run-all apply \
+            --terragrunt-non-interactive \
+            --terragrunt-parallelism 1 \
+            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
