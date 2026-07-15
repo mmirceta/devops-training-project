@@ -1,0 +1,315 @@
+<mxfile host="app.diagrams.net">
+  <diagram name="GitHub Actions Workflows" id="gh-workflows">
+    <mxGraphModel dx="1422" dy="762" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+
+        <!-- ===== TITLE ===== -->
+        <mxCell id="title" value="GitHub Actions Workflows" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=18;fontColor=#333333;align=left;">
+          <mxGeometry x="20" y="10" width="400" height="30" as="geometry" />
+        </mxCell>
+
+        <!-- ===== COLUMN HEADERS ===== -->
+        <mxCell id="col-trig" value="Trigger" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#666666;align=center;">
+          <mxGeometry x="20" y="38" width="155" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="col-wf" value="Workflow" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#666666;align=center;">
+          <mxGeometry x="195" y="38" width="155" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="col-jobs" value="Jobs / Steps" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#666666;align=center;">
+          <mxGeometry x="370" y="38" width="400" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="col-fx" value="Effect" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;fontColor=#666666;align=center;">
+          <mxGeometry x="800" y="38" width="165" height="18" as="geometry" />
+        </mxCell>
+
+        <!-- ===== SECTION: PULL REQUEST ===== -->
+        <mxCell id="bg-pr" value="" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f3e8ff;strokeColor=#9673a6;strokeWidth=2;opacity=40;">
+          <mxGeometry x="10" y="60" width="970" height="335" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-pr" value="Pull Request" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=12;fontColor=#9673a6;align=left;">
+          <mxGeometry x="20" y="64" width="160" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- WF 1: validate-pr -->
+        <mxCell id="trig-1" value="&lt;b&gt;pull_request&lt;/b&gt;&lt;br&gt;→ dev / main&lt;br&gt;&lt;i&gt;any paths&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="88" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-1" value="&lt;b&gt;Validate PR Source&lt;/b&gt;&lt;br&gt;validate-pr.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="88" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="job-1" value="validate-source-branch" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;">
+          <mxGeometry x="370" y="88" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-1" value="&lt;i&gt;Blocks invalid branch&lt;br&gt;combinations&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="88" width="165" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e1a" edge="1" source="trig-1" target="wf-1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1b" edge="1" source="wf-1" target="job-1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e1c" edge="1" source="job-1" target="fx-1" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- WF 2: dev-image-scan -->
+        <mxCell id="trig-2" value="&lt;b&gt;pull_request&lt;/b&gt;&lt;br&gt;→ dev&lt;br&gt;&lt;i&gt;docker/**&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="178" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-2" value="&lt;b&gt;Image Scan (Dev)&lt;/b&gt;&lt;br&gt;dev-image-scan.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="178" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="job-2" value="trivy-scan&lt;br&gt;&lt;font size=&quot;9&quot;&gt;build → scan → check CRITICAL&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="178" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-2" value="&lt;i&gt;PR Comment&lt;br&gt;(Trivy results)&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="178" width="165" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e2a" edge="1" source="trig-2" target="wf-2" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2b" edge="1" source="wf-2" target="job-2" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e2c" edge="1" source="job-2" target="fx-2" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- WF 3: plan-pr -->
+        <mxCell id="trig-3" value="&lt;b&gt;pull_request&lt;/b&gt;&lt;br&gt;→ dev / main&lt;br&gt;&lt;i&gt;landing-zone/**, modules/**&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="268" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-3" value="&lt;b&gt;Plan PR&lt;/b&gt;&lt;br&gt;plan-pr.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="268" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="job-3" value="&lt;b&gt;plan&lt;/b&gt;&lt;br&gt;&lt;font size=&quot;9&quot;&gt;fmt · hclfmt · validate&lt;br&gt;checkov · plan · comment&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="268" width="200" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-3a" value="&lt;i&gt;PR Comment&lt;br&gt;(Checkov scan)&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="268" width="165" height="37" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-3b" value="&lt;i&gt;PR Comment&lt;br&gt;(Terragrunt plan)&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="311" width="165" height="37" as="geometry" />
+        </mxCell>
+        <mxCell id="e3a" edge="1" source="trig-3" target="wf-3" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3b" edge="1" source="wf-3" target="job-3" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3c" edge="1" source="job-3" target="fx-3a" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;exitX=1;exitY=0.25;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e3d" edge="1" source="job-3" target="fx-3b" parent="1"
+          style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== SECTION: PUSH ===== -->
+        <mxCell id="bg-push" value="" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e8f4ff;strokeColor=#6c8ebf;strokeWidth=2;opacity=40;">
+          <mxGeometry x="10" y="405" width="970" height="255" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-push" value="Push" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=12;fontColor=#6c8ebf;align=left;">
+          <mxGeometry x="20" y="410" width="160" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- WF 4: dev-image-build -->
+        <mxCell id="trig-4" value="&lt;b&gt;push&lt;/b&gt;&lt;br&gt;→ dev&lt;br&gt;&lt;i&gt;docker/**&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="430" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-4" value="&lt;b&gt;Build and Push (Dev)&lt;/b&gt;&lt;br&gt;dev-image-build.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="430" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="job-4" value="build-push&lt;br&gt;&lt;font size=&quot;9&quot;&gt;docker build → ACR push&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="430" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-4" value="&lt;i&gt;ACR image&lt;br&gt;:&lt;sha&gt;&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="430" width="165" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e4a" edge="1" source="trig-4" target="wf-4" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4b" edge="1" source="wf-4" target="job-4" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e4c" edge="1" source="job-4" target="fx-4" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- WF 5: apply-push -->
+        <mxCell id="trig-5" value="&lt;b&gt;push&lt;/b&gt;&lt;br&gt;→ dev / main&lt;br&gt;&lt;i&gt;landing-zone/**, modules/**&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="518" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-5" value="&lt;b&gt;Apply&lt;/b&gt;&lt;br&gt;apply-push.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="518" width="155" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="job-5a" value="&lt;b&gt;plan&lt;/b&gt;&lt;br&gt;&lt;font size=&quot;9&quot;&gt;run-all plan&lt;br&gt;upload artifact&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="518" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="job-5b" value="&lt;b&gt;review&lt;/b&gt;&lt;br&gt;&lt;font size=&quot;9&quot;&gt;⏸ manual approval&lt;br&gt;dev/prod-review&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="510" y="518" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="job-5c" value="&lt;b&gt;apply&lt;/b&gt;&lt;br&gt;&lt;font size=&quot;9&quot;&gt;download artifact&lt;br&gt;run-all apply&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="650" y="518" width="120" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-5" value="&lt;i&gt;Azure infrastructure&lt;br&gt;updated&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="518" width="165" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="note-5" value="concurrency: one apply per branch (queued, not cancelled)" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontSize=9;fontColor=#888888;fontStyle=2;align=left;">
+          <mxGeometry x="370" y="602" width="390" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="e5a" edge="1" source="trig-5" target="wf-5" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5b" edge="1" source="wf-5" target="job-5a" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5c" edge="1" source="job-5a" target="job-5b" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5d" edge="1" source="job-5b" target="job-5c" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e5e" edge="1" source="job-5c" target="fx-5" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== SECTION: TAG / MANUAL ===== -->
+        <mxCell id="bg-other" value="" parent="1" vertex="1"
+          style="rounded=1;fillColor=#fff3e0;strokeColor=#d6a520;strokeWidth=2;opacity=40;">
+          <mxGeometry x="10" y="670" width="970" height="205" as="geometry" />
+        </mxCell>
+        <mxCell id="lbl-other" value="Tag / Manual" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=12;fontColor=#d6a520;align=left;">
+          <mxGeometry x="20" y="675" width="160" height="22" as="geometry" />
+        </mxCell>
+
+        <!-- WF 6: release-image -->
+        <mxCell id="trig-6" value="&lt;b&gt;push tag&lt;/b&gt;&lt;br&gt;v*" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="700" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-6" value="&lt;b&gt;Release Image&lt;/b&gt;&lt;br&gt;release-image.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="700" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="job-6" value="release&lt;br&gt;&lt;font size=&quot;9&quot;&gt;docker build → ACR push&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="700" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-6" value="&lt;i&gt;ACR image&lt;br&gt;:&lt;version&gt; + :latest&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="700" width="165" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e6a" edge="1" source="trig-6" target="wf-6" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6b" edge="1" source="wf-6" target="job-6" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e6c" edge="1" source="job-6" target="fx-6" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- WF 7: dev-destroy-manual -->
+        <mxCell id="trig-7" value="&lt;b&gt;workflow_dispatch&lt;/b&gt;&lt;br&gt;manual trigger" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="20" y="790" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="wf-7" value="&lt;b&gt;Destroy Dev&lt;/b&gt;&lt;br&gt;dev-destroy-manual.yaml" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="195" y="790" width="155" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="job-7" value="destroy-dev&lt;br&gt;&lt;font size=&quot;9&quot;&gt;run-all destroy&lt;/font&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="370" y="790" width="200" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="fx-7" value="&lt;i&gt;Azure dev resources&lt;br&gt;destroyed&lt;/i&gt;" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;fontSize=10;verticalAlign=middle;html=1;">
+          <mxGeometry x="800" y="790" width="165" height="60" as="geometry" />
+        </mxCell>
+        <mxCell id="e7a" edge="1" source="trig-7" target="wf-7" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7b" edge="1" source="wf-7" target="job-7" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="e7c" edge="1" source="job-7" target="fx-7" parent="1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;dashed=1;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+
+        <!-- ===== LEGEND ===== -->
+        <mxCell id="leg-bg" value="" parent="1" vertex="1"
+          style="rounded=1;fillColor=#ffffff;strokeColor=#cccccc;strokeWidth=1;">
+          <mxGeometry x="10" y="890" width="560" height="75" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-title" value="Legend" parent="1" vertex="1"
+          style="text;html=1;strokeColor=none;fillColor=none;fontStyle=1;fontSize=11;align=left;">
+          <mxGeometry x="20" y="895" width="80" height="18" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-trig" value="Trigger" parent="1" vertex="1"
+          style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;">
+          <mxGeometry x="20" y="915" width="75" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-wf" value="Workflow" parent="1" vertex="1"
+          style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=9;">
+          <mxGeometry x="105" y="915" width="75" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-job" value="Job" parent="1" vertex="1"
+          style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;">
+          <mxGeometry x="190" y="915" width="75" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-review" value="Review ⏸" parent="1" vertex="1"
+          style="rounded=1;fillColor=#ffe6cc;strokeColor=#d6b656;fontSize=9;">
+          <mxGeometry x="275" y="915" width="75" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-destroy" value="Destructive job" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=9;">
+          <mxGeometry x="360" y="915" width="90" height="28" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-fx" value="Effect (dashed arrow)" parent="1" vertex="1"
+          style="rounded=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=2;fontSize=9;">
+          <mxGeometry x="460" y="915" width="100" height="28" as="geometry" />
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
