@@ -19,78 +19,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  plan:
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+  infra-azure-dev-plan:
+    if: github.ref_name == 'dev'
+    uses: ./.github/workflows/tg-plan.yaml
+    with:
+      stack: azure
+      environment: dev
+    secrets: inherit
 
-    env:
-      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
-      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
-      ARM_USE_OIDC: true
-      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+  infra-azure-prod-plan:
+    if: github.ref_name == 'main'
+    uses: ./.github/workflows/tg-plan.yaml
+    with:
+      stack: azure
+      environment: prod
+    secrets: inherit
 
-    steps:
-      - name: Checkout exact commit
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.ARM_CLIENT_ID }}
-          tenant-id: ${{ vars.ARM_TENANT_ID }}
-          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
-
-      - name: Install OpenTofu
-        uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: 1.8.1
-
-      - name: Cache OpenTofu providers
-        uses: actions/cache@v4
-        with:
-          path: ~/.terraform.d/plugin-cache
-          key: ${{ runner.os }}-tofu-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-tofu-
-
-      - name: Set provider cache dir
-        run: |
-          mkdir -p ~/.terraform.d/plugin-cache
-          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
-
-      - name: Install Terragrunt
-        run: |
-          TG_VERSION="0.68.4"
-          wget -O terragrunt \
-            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
-          chmod +x terragrunt
-          sudo mv terragrunt /usr/local/bin/terragrunt
-
-      - name: Terragrunt plan
-        working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-        run: |
-          terragrunt run-all plan \
-            --terragrunt-non-interactive \
-            --terragrunt-parallelism 1 \
-            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
-
-      - name: Show generated plans
-        run: find "$GITHUB_WORKSPACE/tfplans" -type f -print
-
-      - name: Upload plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan-${{ github.ref_name }}-${{ github.sha }}
-          path: ${{ github.workspace }}/tfplans
-          if-no-files-found: error
-          retention-days: 7
-
-  gate:
-    needs: plan
+  review:
+    needs:
+      - infra-azure-dev-plan
+      - infra-azure-prod-plan
+    if: |
+      always() &&
+      needs.infra-azure-dev-plan.result != 'failure' && needs.infra-azure-dev-plan.result != 'cancelled' &&
+      needs.infra-azure-prod-plan.result != 'failure' && needs.infra-azure-prod-plan.result != 'cancelled'
     runs-on: ubuntu-latest
     environment: ${{ github.ref_name == 'main' && 'prod-review' || 'dev-review' }}
 
@@ -98,81 +50,24 @@ jobs:
       - name: Approval completed
         run: echo "Approved"
 
-  apply:
+  infra-azure-dev-apply:
     needs:
-      - plan
-      - gate
+      - infra-azure-dev-plan
+      - review
+    if: github.ref_name == 'dev' && needs.review.result == 'success'
+    uses: ./.github/workflows/tg-apply.yaml
+    with:
+      stack: azure
+      environment: dev
+    secrets: inherit
 
-    runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-
-    env:
-      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
-      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
-      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
-      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
-      ARM_USE_OIDC: true
-      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
-
-    steps:
-      - name: Checkout exact planned commit
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-
-      - name: Azure Login
-        uses: azure/login@v2
-        with:
-          client-id: ${{ vars.ARM_CLIENT_ID }}
-          tenant-id: ${{ vars.ARM_TENANT_ID }}
-          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
-
-      - name: Install OpenTofu
-        uses: opentofu/setup-opentofu@v1
-        with:
-          tofu_version: 1.8.1
-
-      - name: Restore provider cache
-        uses: actions/cache/restore@v4
-        with:
-          path: ~/.terraform.d/plugin-cache
-          key: ${{ runner.os }}-tofu-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            ${{ runner.os }}-tofu-
-
-      - name: Set provider cache dir
-        run: |
-          mkdir -p ~/.terraform.d/plugin-cache
-          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
-
-      - name: Install Terragrunt
-        run: |
-          TG_VERSION="0.68.4"
-          wget -O terragrunt \
-            "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64"
-          chmod +x terragrunt
-          sudo mv terragrunt /usr/local/bin/terragrunt
-
-      - name: Download exact plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan-${{ github.ref_name }}-${{ github.sha }}
-          path: ${{ github.workspace }}/tfplans
-
-      - name: Verify downloaded plans
-        run: |
-          echo "Downloaded plan files:"
-          find "$GITHUB_WORKSPACE/tfplans" -type f -print
-
-          if ! find "$GITHUB_WORKSPACE/tfplans" -type f | grep -q .; then
-            echo "No plan files were downloaded."
-            exit 1
-          fi
-
-      - name: Terragrunt apply
-        working-directory: landing-zone/azure/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
-        run: |
-          terragrunt run-all apply \
-            --terragrunt-non-interactive \
-            --terragrunt-parallelism 1 \
-            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
+  infra-azure-prod-apply:
+    needs:
+      - infra-azure-prod-plan
+      - review
+    if: github.ref_name == 'main' && needs.review.result == 'success'
+    uses: ./.github/workflows/tg-apply.yaml
+    with:
+      stack: azure
+      environment: prod
+    secrets: inherit
