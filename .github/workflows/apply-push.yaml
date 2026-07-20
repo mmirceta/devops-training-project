@@ -20,7 +20,6 @@ concurrency:
 
 jobs:
   infra-azure-dev-plan:
-    if: github.ref_name == 'dev'
     uses: ./.github/workflows/tg-plan.yaml
     with:
       stack: azure
@@ -28,23 +27,27 @@ jobs:
     secrets: inherit
 
   infra-azure-prod-plan:
-    if: github.ref_name == 'main'
     uses: ./.github/workflows/tg-plan.yaml
     with:
       stack: azure
       environment: prod
     secrets: inherit
 
-  review:
-    needs:
-      - infra-azure-dev-plan
-      - infra-azure-prod-plan
-    if: |
-      always() &&
-      needs.infra-azure-dev-plan.result != 'failure' && needs.infra-azure-dev-plan.result != 'cancelled' &&
-      needs.infra-azure-prod-plan.result != 'failure' && needs.infra-azure-prod-plan.result != 'cancelled'
+  review-dev:
+    needs: infra-azure-dev-plan
+    if: needs.infra-azure-dev-plan.result == 'success'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref_name == 'main' && 'prod-review' || 'dev-review' }}
+    environment: dev-review
+
+    steps:
+      - name: Approval completed
+        run: echo "Approved"
+
+  review-prod:
+    needs: infra-azure-prod-plan
+    if: needs.infra-azure-prod-plan.result == 'success'
+    runs-on: ubuntu-latest
+    environment: prod-review
 
     steps:
       - name: Approval completed
@@ -53,8 +56,8 @@ jobs:
   infra-azure-dev-apply:
     needs:
       - infra-azure-dev-plan
-      - review
-    if: github.ref_name == 'dev' && needs.review.result == 'success'
+      - review-dev
+    if: needs.review-dev.result == 'success'
     uses: ./.github/workflows/tg-apply.yaml
     with:
       stack: azure
@@ -64,8 +67,8 @@ jobs:
   infra-azure-prod-apply:
     needs:
       - infra-azure-prod-plan
-      - review
-    if: github.ref_name == 'main' && needs.review.result == 'success'
+      - review-prod
+    if: needs.review-prod.result == 'success'
     uses: ./.github/workflows/tg-apply.yaml
     with:
       stack: azure
