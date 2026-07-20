@@ -1,0 +1,92 @@
+name: Terragrunt Apply (reusable)
+
+on:
+  workflow_call:
+    inputs:
+      stack:
+        type: string
+        description: "Landing zone stack to apply (e.g. azure)"
+        required: true
+      environment:
+        type: string
+        description: "Environment to apply (dev or prod)"
+        required: true
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  TOFU_VERSION: "1.8.1"
+  TG_VERSION: "0.68.4"
+
+jobs:
+  apply:
+    name: "tg:apply"
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    env:
+      ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
+      ARM_TENANT_ID: ${{ vars.ARM_TENANT_ID }}
+      ARM_SUBSCRIPTION_ID: ${{ vars.ARM_SUBSCRIPTION_ID }}
+      TF_VAR_my_ip: ${{ vars.TF_VAR_my_ip }}
+      ARM_USE_OIDC: true
+      TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+
+    steps:
+      - name: Checkout exact planned commit
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ vars.ARM_CLIENT_ID }}
+          tenant-id: ${{ vars.ARM_TENANT_ID }}
+          subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
+
+      - name: Install OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: ${{ env.TOFU_VERSION }}
+
+      - name: Restore provider cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ~/.terraform.d/plugin-cache
+          key: ${{ runner.os }}-tofu-${{ hashFiles('**/.terraform.lock.hcl') }}
+          restore-keys: |
+            ${{ runner.os }}-tofu-
+
+      - name: Set provider cache dir
+        run: |
+          mkdir -p ~/.terraform.d/plugin-cache
+          echo 'plugin_cache_dir = "$HOME/.terraform.d/plugin-cache"' > ~/.terraformrc
+
+      - name: Install Terragrunt
+        run: |
+          curl -sL "https://github.com/gruntwork-io/terragrunt/releases/download/v${TG_VERSION}/terragrunt_linux_amd64" \
+            -o /usr/local/bin/terragrunt
+          chmod +x /usr/local/bin/terragrunt
+
+      - name: Download plan artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: plan-${{ inputs.stack }}-${{ inputs.environment }}
+          path: ${{ github.workspace }}
+
+      - name: Unpack plan artifact
+        run: |
+          tar -xzf "plan-${{ inputs.stack }}-${{ inputs.environment }}.tgz" -C "$GITHUB_WORKSPACE"
+
+          if ! find "$GITHUB_WORKSPACE/tfplans" -type f | grep -q .; then
+            echo "No plan files were found in the downloaded artifact."
+            exit 1
+          fi
+
+      - name: Apply
+        run: |
+          chmod +x .github/scripts/tg-apply.sh
+          .github/scripts/tg-apply.sh "landing-zone/${{ inputs.stack }}/${{ inputs.environment }}" "$GITHUB_WORKSPACE/tfplans"
