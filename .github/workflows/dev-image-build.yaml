@@ -6,6 +6,7 @@ on:
       - dev
     paths:
       - "docker/**"
+      - "!docker/VERSION"
 
 permissions:
   contents: read
