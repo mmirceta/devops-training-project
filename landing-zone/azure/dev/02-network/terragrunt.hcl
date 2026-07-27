@@ -8,7 +8,7 @@ include "dev" {
 }
 
 terraform {
-  source = "../../../../modules/network"
+  source = "../../../../modules/azure/network"
 }
 
 dependency "rg" {

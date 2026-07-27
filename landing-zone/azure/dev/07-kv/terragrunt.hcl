@@ -9,7 +9,7 @@ include "dev" {
 }
 
 terraform {
-  source = "../../../../modules/kv"
+  source = "../../../../modules/azure/kv"
 }
 
 dependency "rg" {
