@@ -42,6 +42,11 @@ inputs = {
       address_prefixes = ["10.20.3.0/24"]
       service_endpoints = ["Microsoft.KeyVault", "Microsoft.ContainerRegistry"]
     }
+
+    k8s = {
+      name             = "snet-k8s-dev"
+      address_prefixes = ["10.20.4.0/24"]
+    }
   }
 
   nsgs = {
@@ -121,6 +126,24 @@ inputs = {
           destination_address_prefix = "10.20.3.0/24"
         }
 
+        deny_internet_inbound = {
+          name                       = "Deny-Internet-Inbound"
+          priority                   = 4000
+          direction                  = "Inbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          source_port_range          = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+      }
+    }
+
+    k8s = {
+      name = "nsg-k8s-dev"
+
+      rules = {
         deny_internet_inbound = {
           name                       = "Deny-Internet-Inbound"
           priority                   = 4000
