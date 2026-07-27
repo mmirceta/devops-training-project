@@ -19,11 +19,7 @@ permissions:
 jobs:
   plan:
     runs-on: ubuntu-latest
-    environment: ${{ matrix.env }}
-    strategy:
-      fail-fast: false
-      matrix:
-        env: [dev, prod]
+    environment: ${{ github.base_ref == 'main' && 'prod' || 'dev' }}
 
     env:
       ARM_CLIENT_ID: ${{ vars.ARM_CLIENT_ID }}
@@ -74,7 +70,7 @@ jobs:
         run: terragrunt hclfmt --check --terragrunt-working-dir .
 
       - name: Terragrunt validate
-        working-directory: landing-zone/azure/${{ matrix.env }}
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
       - name: Install Checkov
@@ -125,7 +121,7 @@ jobs:
       - name: Post Checkov report as PR comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: checkov-scan-${{ matrix.env }}
+          header: checkov-scan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
           path: checkov-comment.md
 
       - name: Fail if Checkov violations found
@@ -134,20 +130,19 @@ jobs:
 
       - name: Terragrunt plan
         id: plan
-        working-directory: landing-zone/azure/${{ matrix.env }}
+        working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         continue-on-error: true
         run: |
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
 
       - name: Create plan summary
-        env:
-          MATRIX_ENV: ${{ matrix.env }}
         run: |
           python3 <<'PY'
           import re, os
           from pathlib import Path
 
-          env = os.environ["MATRIX_ENV"]
+          base_ref = os.environ.get("GITHUB_BASE_REF", "dev")
+          env = "prod" if base_ref == "main" else "dev"
           raw = Path("plan.txt").read_text(errors="ignore")
 
           clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
@@ -214,7 +209,7 @@ jobs:
       - name: Comment plan on PR
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: terragrunt-plan-${{ matrix.env }}
+          header: terragrunt-plan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
           path: comment.md
 
       - name: Fail if plan failed
