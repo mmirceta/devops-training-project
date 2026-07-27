@@ -1,4 +1,4 @@
-name: Plan PR
+name: Branch-Plan on PR
 
 on:
   pull_request:

@@ -1,24 +1,27 @@
-name: Build and Push Image (Dev)
+name: Docker-Release Image
 
 on:
   push:
     branches:
       - dev
     paths:
-      - "docker/**"
-      - "!docker/VERSION"
+      - "docker/VERSION"
 
 permissions:
   contents: read
   id-token: write
 
 jobs:
-  build-push:
+  release:
     runs-on: ubuntu-latest
     environment: dev
 
     steps:
       - uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: echo "value=$(tr -d '[:space:]' < docker/VERSION)" >> "$GITHUB_OUTPUT"
 
       - name: Azure Login
         uses: azure/login@v2
@@ -34,8 +37,11 @@ jobs:
         run: |
           docker build \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }} \
+            -t acrbootstraptraining.azurecr.io/docker-web:${{ steps.version.outputs.value }} \
+            -t acrbootstraptraining.azurecr.io/docker-web:latest \
             docker/nginx
 
       - name: Push image
-        run: docker push acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }}
+        run: |
+          docker push acrbootstraptraining.azurecr.io/docker-web:${{ steps.version.outputs.value }}
+          docker push acrbootstraptraining.azurecr.io/docker-web:latest
