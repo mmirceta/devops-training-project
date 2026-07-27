@@ -1,4 +1,4 @@
-name: Image Scan (Dev)
+name: Docker-Image Scan (Dev)
 
 on:
   pull_request:

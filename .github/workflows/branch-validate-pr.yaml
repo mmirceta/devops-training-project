@@ -1,4 +1,4 @@
-name: Validate PR Source
+name: Branch-Validate PR Source branch
 
 on:
   pull_request:
