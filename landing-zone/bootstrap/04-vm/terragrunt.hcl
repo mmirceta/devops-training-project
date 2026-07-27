@@ -3,7 +3,7 @@ include "root" {
 }
 
 terraform {
-  source = "../../../modules/vm"
+  source = "../../../modules/azure/vm"
 }
 
 dependency "rg" {

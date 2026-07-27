@@ -3,7 +3,7 @@
 # }
 
 # terraform {
-#   source = "../../../../modules/acr"
+#   source = "../../../../modules/azure/acr"
 # }
 
 # dependency "rg" {
