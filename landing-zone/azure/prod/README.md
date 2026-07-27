@@ -4,3 +4,4 @@ test #3 - test comment
 test #4 - test artifacts
 test #5 - chekov
 test #6 - test review and artifacts
+test #7 - test workflow rollback
