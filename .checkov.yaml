@@ -39,3 +39,23 @@ skip-check:
   - CKV2_AZURE_33   # private endpoint (SA uses subnet allowlist instead)
   - CKV2_AZURE_38   # blob soft-delete
   - CKV2_AZURE_41   # SAS expiration policy
+
+  # --- AKS: cluster is intentionally public (no private endpoint / IP allowlist) ---
+  - CKV_AZURE_6     # API server authorized IP ranges
+  - CKV_AZURE_115   # private cluster
+
+  # --- AKS: enterprise / governance features not used in training ---
+  - CKV_AZURE_117   # disk encryption set (customer-managed keys)
+  - CKV_AZURE_226   # ephemeral OS disks (requires sized local temp disk)
+  - CKV_AZURE_227   # host-based encryption of temp disks/caches
+  - CKV_AZURE_172   # Secrets Store CSI driver autorotation (KV integration not used)
+  - CKV_AZURE_116   # Azure Policy add-on
+  - CKV_AZURE_4     # Azure Monitor / Container Insights logging
+  - CKV_AZURE_141   # local admin account (no Azure AD RBAC integration)
+  - CKV_AZURE_171   # auto-upgrade channel (version managed manually)
+  - CKV_AZURE_7     # network policy add-on
+
+  # --- AKS: cost / simplicity choices for training ---
+  - CKV_AZURE_170   # Paid SKU tier for SLA (Free tier used to minimize cost)
+  - CKV_AZURE_168   # minimum 50 pods per node (small training cluster)
+  - CKV2_AZURE_29   # Azure CNI networking (kubenet used for simplicity)

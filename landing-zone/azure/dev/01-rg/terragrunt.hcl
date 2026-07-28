@@ -9,6 +9,6 @@ include "dev" {
 }
 
 terraform {
-  source = "../../../../modules/rg/"
+  source = "../../../../modules/azure/rg/"
 }
 
