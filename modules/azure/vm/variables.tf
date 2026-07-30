@@ -43,3 +43,9 @@ variable "admin_password" {
 variable "tags" {
   type = map(string)
 }
+
+variable "custom_data" {
+  type        = string
+  default     = null
+  description = "Base64-encoded cloud-init. Defaults to the module's built-in cloud-init.yaml (Docker/Node/OpenTofu/Terragrunt tooling for a GitHub Actions runner)."
+}

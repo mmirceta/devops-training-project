@@ -49,7 +49,7 @@ resource "azurerm_linux_virtual_machine" "lz-vm" {
   admin_password                  = var.admin_password
 
   network_interface_ids = [azurerm_network_interface.lz-vm-nic.id]
-  custom_data           = filebase64("${path.module}/cloud-init.yaml")
+  custom_data           = var.custom_data != null ? var.custom_data : filebase64("${path.module}/cloud-init.yaml")
 
   depends_on = [azurerm_network_interface.lz-vm-nic]
 
