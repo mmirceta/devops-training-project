@@ -45,7 +45,7 @@ inputs = {
 
   subnet_id = dependency.network.outputs.subnet_ids["mgmt"]
 
-  size = "Standard_B2s"
+  size = "Standard_D2s_v3"
 
   admin_username = "azureuser"
   admin_password = get_env("TF_VAR_vm_admin_password")
