@@ -59,3 +59,14 @@ skip-check:
   - CKV_AZURE_170   # Paid SKU tier for SLA (Free tier used to minimize cost)
   - CKV_AZURE_168   # minimum 50 pods per node (small training cluster)
   - CKV2_AZURE_29   # Azure CNI networking (kubenet used for simplicity)
+
+  # --- K8s: nginx/apache workloads (simple training deployments, no hardening) ---
+  - CKV_K8S_9     # readiness probe not configured
+  - CKV_K8S_8     # liveness probe not configured
+  - CKV_K8S_10    # CPU requests not set
+  - CKV_K8S_13    # memory requests not set
+  - CKV_K8S_15    # image pull policy not set to Always
+  - CKV_K8S_28    # NET_RAW capability not dropped
+  - CKV_K8S_29    # pod-level security context not applied
+  - CKV_K8S_30    # container-level security context not applied
+  - CKV_K8S_43    # image not pinned by digest
