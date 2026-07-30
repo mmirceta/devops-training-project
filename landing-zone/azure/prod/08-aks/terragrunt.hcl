@@ -9,7 +9,7 @@ include "prod" {
 }
 
 terraform {
-  source = "../../../../modules/k8s"
+  source = "../../../../modules/k8s/cluster"
 }
 
 dependency "rg" {
