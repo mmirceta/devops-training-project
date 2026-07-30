@@ -8,7 +8,11 @@ on:
     paths:
       - "landing-zone/azure/dev/**"
       - "landing-zone/azure/prod/**"
+      - "landing-zone/k8s/dev/**"
+      - "landing-zone/k8s/prod/**"
       - "modules/**"
+      - ".github/workflows/branch-plan-pr.yaml"
+      - ".github/workflows/branch-apply-push.yaml"
 
 permissions:
   contents: read
@@ -73,6 +77,10 @@ jobs:
         working-directory: landing-zone/azure/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
+      - name: Terragrunt validate (k8s)
+        working-directory: landing-zone/k8s/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
+        run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
+
       - name: Install Checkov
         run: pip install checkov
 
@@ -134,6 +142,13 @@ jobs:
         continue-on-error: true
         run: |
           terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan.txt 2>&1
+
+      - name: Terragrunt plan (k8s)
+        id: plan-k8s
+        working-directory: landing-zone/k8s/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
+        continue-on-error: true
+        run: |
+          terragrunt run-all plan --terragrunt-non-interactive --terragrunt-parallelism 1 -no-color > $GITHUB_WORKSPACE/plan-k8s.txt 2>&1
 
       - name: Create plan summary
         run: |
@@ -212,6 +227,83 @@ jobs:
           header: terragrunt-plan-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
           path: comment.md
 
+      - name: Create plan summary (k8s)
+        run: |
+          python3 <<'PY'
+          import re, os
+          from pathlib import Path
+
+          base_ref = os.environ.get("GITHUB_BASE_REF", "dev")
+          env = "prod" if base_ref == "main" else "dev"
+          raw = Path("plan-k8s.txt").read_text(errors="ignore")
+
+          clean = re.sub(r'\x1b\[[0-9;]*m', '', raw)
+
+          tofu_re = re.compile(r'^\S+\s+STDOUT\s+\[\S+\]\s+tofu:\s?(.*)', re.MULTILINE)
+          plan = '\n'.join(m.group(1) for m in tofu_re.finditer(clean))
+
+          groups = {"create": [], "update": [], "replace": [], "destroy": []}
+
+          ACTION_MAP = {
+              "will be created":          "create",
+              "will be updated in-place": "update",
+              "must be replaced":         "replace",
+              "will be destroyed":        "destroy",
+          }
+
+          header_re = re.compile(
+              r'^[ \t]*# (\S+) (will be created|will be updated in-place|must be replaced|will be destroyed)$',
+              re.MULTILINE,
+          )
+          matches = list(header_re.finditer(plan))
+
+          for i, m in enumerate(matches):
+              resource = m.group(1)
+              action   = m.group(2)
+              start    = m.start()
+              end      = matches[i + 1].start() if i + 1 < len(matches) else len(plan)
+              chunk    = plan[start:end]
+              summary  = re.search(r'\nPlan: \d+', chunk)
+              if summary:
+                  chunk = chunk[:summary.start()]
+              groups[ACTION_MAP[action]].append((resource, chunk.strip()))
+
+          def section(title, items):
+              if not items:
+                  return []
+              out = [f"## {title}", ""]
+              for resource, block in items:
+                  out.append("<details>")
+                  out.append(f"<summary>{resource}</summary>")
+                  out.append("")
+                  out.append("```hcl")
+                  out.append(block)
+                  out.append("```")
+                  out.append("")
+                  out.append("</details>")
+                  out.append("")
+              return out
+
+          modified = groups["update"] + groups["replace"]
+
+          comment = [f"# Terragrunt Plan - {env.capitalize()} (k8s)", ""]
+          comment += section("Create",           groups["create"])
+          comment += section("Destroy",          groups["destroy"])
+          comment += section("Update / Replace", modified)
+
+          if not groups["create"] and not groups["destroy"] and not modified:
+              comment.append("_No changes._")
+              comment.append("")
+
+          Path("comment-k8s.md").write_text("\n".join(comment))
+          PY
+
+      - name: Comment plan on PR (k8s)
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: terragrunt-plan-k8s-${{ github.base_ref == 'main' && 'prod' || 'dev' }}
+          path: comment-k8s.md
+
       - name: Fail if plan failed
-        if: steps.plan.outcome == 'failure'
+        if: steps.plan.outcome == 'failure' || steps.plan-k8s.outcome == 'failure'
         run: exit 1

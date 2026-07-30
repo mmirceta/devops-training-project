@@ -8,7 +8,11 @@ on:
     paths:
       - "landing-zone/azure/dev/**"
       - "landing-zone/azure/prod/**"
+      - "landing-zone/k8s/dev/**"
+      - "landing-zone/k8s/prod/**"
       - "modules/**"
+      - ".github/workflows/branch-plan-pr.yaml"
+      - ".github/workflows/branch-apply-push.yaml"
 
 permissions:
   contents: read
@@ -78,14 +82,32 @@ jobs:
             --terragrunt-parallelism 1 \
             --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
 
+      - name: Terragrunt plan (k8s)
+        working-directory: landing-zone/k8s/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+        run: |
+          terragrunt run-all plan \
+            --terragrunt-non-interactive \
+            --terragrunt-parallelism 1 \
+            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans-k8s"
+
       - name: Show generated plans
-        run: find "$GITHUB_WORKSPACE/tfplans" -type f -print
+        run: |
+          find "$GITHUB_WORKSPACE/tfplans" -type f -print
+          find "$GITHUB_WORKSPACE/tfplans-k8s" -type f -print
 
       - name: Upload plan artifact
         uses: actions/upload-artifact@v4
         with:
           name: tfplan-${{ github.ref_name }}-${{ github.sha }}
           path: ${{ github.workspace }}/tfplans
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload plan artifact (k8s)
+        uses: actions/upload-artifact@v4
+        with:
+          name: tfplan-k8s-${{ github.ref_name }}-${{ github.sha }}
+          path: ${{ github.workspace }}/tfplans-k8s
           if-no-files-found: error
           retention-days: 7
 
@@ -159,13 +181,25 @@ jobs:
           name: tfplan-${{ github.ref_name }}-${{ github.sha }}
           path: ${{ github.workspace }}/tfplans
 
+      - name: Download exact plan artifact (k8s)
+        uses: actions/download-artifact@v4
+        with:
+          name: tfplan-k8s-${{ github.ref_name }}-${{ github.sha }}
+          path: ${{ github.workspace }}/tfplans-k8s
+
       - name: Verify downloaded plans
         run: |
           echo "Downloaded plan files:"
           find "$GITHUB_WORKSPACE/tfplans" -type f -print
+          find "$GITHUB_WORKSPACE/tfplans-k8s" -type f -print
 
           if ! find "$GITHUB_WORKSPACE/tfplans" -type f | grep -q .; then
             echo "No plan files were downloaded."
+            exit 1
+          fi
+
+          if ! find "$GITHUB_WORKSPACE/tfplans-k8s" -type f | grep -q .; then
+            echo "No k8s plan files were downloaded."
             exit 1
           fi
 
@@ -176,3 +210,11 @@ jobs:
             --terragrunt-non-interactive \
             --terragrunt-parallelism 1 \
             --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans"
+
+      - name: Terragrunt apply (k8s)
+        working-directory: landing-zone/k8s/${{ github.ref_name == 'main' && 'prod' || 'dev' }}
+        run: |
+          terragrunt run-all apply \
+            --terragrunt-non-interactive \
+            --terragrunt-parallelism 1 \
+            --terragrunt-out-dir "$GITHUB_WORKSPACE/tfplans-k8s"
