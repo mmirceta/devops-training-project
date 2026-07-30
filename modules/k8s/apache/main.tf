@@ -14,10 +14,16 @@ provider "kubernetes" {
   cluster_ca_certificate = base64decode(var.cluster_ca_certificate)
 }
 
+resource "kubernetes_namespace" "apache" {
+  metadata {
+    name = var.namespace
+  }
+}
+
 resource "kubernetes_deployment" "apache" {
   metadata {
     name      = "apache"
-    namespace = var.namespace
+    namespace = kubernetes_namespace.apache.metadata[0].name
     labels = {
       app = "apache"
     }
@@ -51,6 +57,13 @@ resource "kubernetes_deployment" "apache" {
           port {
             container_port = 80
           }
+
+          resources {
+            limits = {
+              cpu    = var.cpu_limit
+              memory = var.memory_limit
+            }
+          }
         }
       }
     }
@@ -60,7 +73,7 @@ resource "kubernetes_deployment" "apache" {
 resource "kubernetes_service" "apache" {
   metadata {
     name      = "apache"
-    namespace = var.namespace
+    namespace = kubernetes_namespace.apache.metadata[0].name
   }
 
   spec {

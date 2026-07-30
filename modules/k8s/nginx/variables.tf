@@ -20,7 +20,7 @@ variable "cluster_ca_certificate" {
 
 variable "namespace" {
   type    = string
-  default = "default"
+  default = "nginx"
 }
 
 variable "replicas" {
@@ -31,4 +31,14 @@ variable "replicas" {
 variable "image" {
   type    = string
   default = "nginx:1.27"
+}
+
+variable "cpu_limit" {
+  type    = string
+  default = "250m"
+}
+
+variable "memory_limit" {
+  type    = string
+  default = "256Mi"
 }
