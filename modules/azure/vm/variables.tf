@@ -38,6 +38,13 @@ variable "admin_username" {
 variable "admin_password" {
   type      = string
   sensitive = true
+  default   = null
+}
+
+variable "admin_ssh_public_key" {
+  type        = string
+  default     = null
+  description = "SSH public key for admin_username. When set, password authentication is disabled and admin_password is ignored."
 }
 
 variable "tags" {
