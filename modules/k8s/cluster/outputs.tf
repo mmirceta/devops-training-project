@@ -30,3 +30,7 @@ output "kube_config_raw" {
   value     = azurerm_kubernetes_cluster.lz-aks.kube_config_raw
   sensitive = true
 }
+
+output "kubelet_identity_object_id" {
+  value = azurerm_kubernetes_cluster.lz-aks.kubelet_identity[0].object_id
+}
