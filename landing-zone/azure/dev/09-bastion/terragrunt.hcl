@@ -47,8 +47,8 @@ inputs = {
 
   size = "Standard_B2s_v2"
 
-  admin_username = "azureuser"
-  admin_password = get_env("TF_VAR_vm_admin_password")
+  admin_username       = "azureuser"
+  admin_ssh_public_key = get_env("TF_VAR_bastion_ssh_public_key")
 
   custom_data = filebase64("${get_terragrunt_dir()}/cloud-init.yaml")
 

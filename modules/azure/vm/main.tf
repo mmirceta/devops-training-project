@@ -45,11 +45,19 @@ resource "azurerm_linux_virtual_machine" "lz-vm" {
   size                            = var.size
   zone                            = var.zone
   admin_username                  = var.admin_username
-  disable_password_authentication = false
-  admin_password                  = var.admin_password
+  disable_password_authentication = var.admin_ssh_public_key != null
+  admin_password                  = var.admin_ssh_public_key != null ? null : var.admin_password
 
   network_interface_ids = [azurerm_network_interface.lz-vm-nic.id]
   custom_data           = var.custom_data != null ? var.custom_data : filebase64("${path.module}/cloud-init.yaml")
+
+  dynamic "admin_ssh_key" {
+    for_each = var.admin_ssh_public_key != null ? [var.admin_ssh_public_key] : []
+    content {
+      username   = var.admin_username
+      public_key = admin_ssh_key.value
+    }
+  }
 
   depends_on = [azurerm_network_interface.lz-vm-nic]
 
