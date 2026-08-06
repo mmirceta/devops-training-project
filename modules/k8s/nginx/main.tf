@@ -60,8 +60,9 @@ resource "kubernetes_deployment" "nginx" {
         }
 
         container {
-          name  = "nginx"
-          image = var.image
+          name              = "nginx"
+          image             = var.image
+          image_pull_policy = "Always"
 
           port {
             container_port = 80
