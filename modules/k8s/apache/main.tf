@@ -51,8 +51,9 @@ resource "kubernetes_deployment" "apache" {
         }
 
         container {
-          name  = "apache"
-          image = var.image
+          name              = "apache"
+          image             = var.image
+          image_pull_policy = "Always"
 
           port {
             container_port = 80
