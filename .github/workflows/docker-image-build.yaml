@@ -30,12 +30,22 @@ jobs:
       - name: Login to ACR
         run: az acr login --name acrbootstraptraining
 
-      - name: Build image
+      - name: Build nginx image
         run: |
           docker build \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }} \
+            -t acrbootstraptraining.azurecr.io/nginx:${{ github.sha }} \
             docker/nginx
 
-      - name: Push image
-        run: docker push acrbootstraptraining.azurecr.io/docker-web:${{ github.sha }}
+      - name: Push nginx image
+        run: docker push acrbootstraptraining.azurecr.io/nginx:${{ github.sha }}
+
+      - name: Build apache image
+        run: |
+          docker build \
+            -f docker/apache/Dockerfile.apache \
+            -t acrbootstraptraining.azurecr.io/apache:${{ github.sha }} \
+            docker/apache
+
+      - name: Push apache image
+        run: docker push acrbootstraptraining.azurecr.io/apache:${{ github.sha }}

@@ -15,6 +15,17 @@ jobs:
   trivy-scan:
     runs-on: ubuntu-latest
 
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: nginx
+            dockerfile: docker/nginx/Dockerfile.nginx
+            context: docker/nginx
+          - name: apache
+            dockerfile: docker/apache/Dockerfile.apache
+            context: docker/apache
+
     steps:
       - uses: actions/checkout@v4
 
@@ -23,9 +34,9 @@ jobs:
           docker build \
             --pull \
             --no-cache \
-            -f docker/nginx/Dockerfile.nginx \
-            -t docker-web:pr-${{ github.sha }} \
-            docker/nginx
+            -f ${{ matrix.image.dockerfile }} \
+            -t ${{ matrix.image.name }}:pr-${{ github.sha }} \
+            ${{ matrix.image.context }}
 
       - name: Trivy scan
         run: |
@@ -36,7 +47,7 @@ jobs:
             --severity HIGH,CRITICAL \
             --format table \
             --exit-code 0 \
-            docker-web:pr-${{ github.sha }} > trivy-report.txt
+            ${{ matrix.image.name }}:pr-${{ github.sha }} > trivy-report.txt
 
       - name: Check CRITICAL vulnerabilities with fix available
         id: critical-check
@@ -49,12 +60,12 @@ jobs:
             --severity CRITICAL \
             --ignore-unfixed \
             --exit-code 1 \
-            docker-web:pr-${{ github.sha }}
+            ${{ matrix.image.name }}:pr-${{ github.sha }}
 
       - name: Format Trivy report
         run: |
           {
-            echo "## Trivy Vulnerability Scan"
+            echo "## Trivy Vulnerability Scan — ${{ matrix.image.name }}"
             echo ""
             if [ "${{ steps.critical-check.outcome }}" == "failure" ]; then
               echo "> [!CAUTION]"
@@ -64,7 +75,7 @@ jobs:
               echo "> No CRITICAL vulnerabilities with fixes available."
             fi
             echo ""
-            echo "**Image:** \`docker-web:pr-${{ github.sha }}\`"
+            echo "**Image:** \`${{ matrix.image.name }}:pr-${{ github.sha }}\`"
             echo ""
             echo '```'
             cat trivy-report.txt
@@ -74,7 +85,7 @@ jobs:
       - name: Post Trivy report as PR comment
         uses: marocchino/sticky-pull-request-comment@v2
         with:
-          header: trivy-scan
+          header: trivy-scan-${{ matrix.image.name }}
           path: trivy-comment.md
 
       - name: Fail if CRITICAL vulnerabilities with fix found
