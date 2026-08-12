@@ -5,7 +5,8 @@ on:
     branches:
       - dev
     paths:
-      - "docker/VERSION"
+      - "docker/nginx/VERSION"
+      - "docker/apache/VERSION"
 
 permissions:
   contents: read
@@ -18,10 +19,15 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Read version
-        id: version
-        run: echo "value=$(tr -d '[:space:]' < docker/VERSION)" >> "$GITHUB_OUTPUT"
+      - name: Detect changed versions
+        id: changes
+        run: |
+          changed=$(git diff --name-only ${{ github.event.before }} ${{ github.event.after }})
+          echo "nginx=$(echo "$changed" | grep -qx 'docker/nginx/VERSION' && echo true || echo false)" >> "$GITHUB_OUTPUT"
+          echo "apache=$(echo "$changed" | grep -qx 'docker/apache/VERSION' && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Azure Login
         uses: azure/login@v2
@@ -31,30 +37,37 @@ jobs:
           subscription-id: ${{ vars.ARM_SUBSCRIPTION_ID }}
 
       - name: Login to ACR
+        if: steps.changes.outputs.nginx == 'true' || steps.changes.outputs.apache == 'true'
         run: az acr login --name acrbootstraptraining
 
-      - name: Build nginx image
+      - name: Read nginx version
+        if: steps.changes.outputs.nginx == 'true'
+        id: nginx-version
+        run: echo "value=$(tr -d '[:space:]' < docker/nginx/VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push nginx image
+        if: steps.changes.outputs.nginx == 'true'
         run: |
           docker build \
             -f docker/nginx/Dockerfile.nginx \
-            -t acrbootstraptraining.azurecr.io/nginx:${{ steps.version.outputs.value }} \
+            -t acrbootstraptraining.azurecr.io/nginx:${{ steps.nginx-version.outputs.value }} \
             -t acrbootstraptraining.azurecr.io/nginx:latest \
             docker/nginx
-
-      - name: Push nginx image
-        run: |
-          docker push acrbootstraptraining.azurecr.io/nginx:${{ steps.version.outputs.value }}
+          docker push acrbootstraptraining.azurecr.io/nginx:${{ steps.nginx-version.outputs.value }}
           docker push acrbootstraptraining.azurecr.io/nginx:latest
 
-      - name: Build apache image
+      - name: Read apache version
+        if: steps.changes.outputs.apache == 'true'
+        id: apache-version
+        run: echo "value=$(tr -d '[:space:]' < docker/apache/VERSION)" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push apache image
+        if: steps.changes.outputs.apache == 'true'
         run: |
           docker build \
             -f docker/apache/Dockerfile.apache \
-            -t acrbootstraptraining.azurecr.io/apache:${{ steps.version.outputs.value }} \
+            -t acrbootstraptraining.azurecr.io/apache:${{ steps.apache-version.outputs.value }} \
             -t acrbootstraptraining.azurecr.io/apache:latest \
             docker/apache
-
-      - name: Push apache image
-        run: |
-          docker push acrbootstraptraining.azurecr.io/apache:${{ steps.version.outputs.value }}
+          docker push acrbootstraptraining.azurecr.io/apache:${{ steps.apache-version.outputs.value }}
           docker push acrbootstraptraining.azurecr.io/apache:latest
