@@ -1,0 +1,69 @@
+include "root" {
+  path = find_in_parent_folders("root.hcl")
+}
+
+terraform {
+  source = "../../../modules/azure/vm"
+}
+
+dependency "rg" {
+  config_path = "../01-rg/"
+}
+
+dependency "network" {
+  config_path = "../02-network/"
+}
+
+locals {
+  env = "bootstrap"
+}
+
+dependency "network" {
+  config_path = "../02-network/"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    subnet_ids = {
+      mgmt = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-mgmt-dev"
+      app  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-app-dev"
+      data = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-data-dev"
+    }
+    vnet_id   = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training"
+    vnet_name = "vnet-dev-training"
+  }
+}
+
+dependency "aks" {
+  config_path = "../08-aks/"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    kubelet_identity_object_id = "00000000-0000-0000-0000-000000000000"
+  }
+}
+
+locals {
+  env = "dev"
+}
+
+inputs = {
+  resource_group_name = dependency.rg.outputs.name
+
+  env = local.env
+
+  sku           = "Premium"
+  admin_enabled = false
+
+  subnet_id = dependency.network.outputs.subnet_ids["mgmt"]
+  vnet_id   = dependency.network.outputs.vnet_id
+
+  tags = {
+    environment = local.env
+    project     = "devops-training"
+  }
+
+  role_assignments = {
+    aks-kubelet-pull = {
+      principal_id = dependency.aks.outputs.kubelet_identity_object_id
+      role         = "AcrPull"
+    }
+  }
+}
