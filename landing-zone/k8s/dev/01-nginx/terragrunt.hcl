@@ -33,5 +33,5 @@ inputs = {
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
 
-  image = "acrdevtraining.azurecr.io/nginx:1.27"
+  image = "acrbootstraptraining.azurecr.io/nginx:latest"
 }
