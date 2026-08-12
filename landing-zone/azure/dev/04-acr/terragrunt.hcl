@@ -1,3 +1,5 @@
+###### ACR MOVED TO BOOTSTRAP MODULES, THIS TERRAGRUNT FILE IS DEPRECATED ######
+
 # include "root" {
 #   path   = find_in_parent_folders("root.hcl")
 #   expose = true
@@ -51,21 +53,23 @@
 
 #   env = local.env
 
-#   sku           = "Premium"
-#   admin_enabled = false
+# #   sku           = "Premium"
+# #   admin_enabled = false
 
 #   subnet_id = dependency.network.outputs.subnet_ids["mgmt"]
 #   vnet_id   = dependency.network.outputs.vnet_id
 
-#   tags = {
-#     environment = local.env
-#     project     = "devops-training"
-#   }
+# #   tags = {
+# #     environment = local.env
+# #     project     = "devops-training"
+# #   }
 
-#   role_assignments = {
-#     aks-kubelet-pull = {
-#       principal_id = dependency.aks.outputs.kubelet_identity_object_id
-#       role         = "AcrPull"
-#     }
-#   }
+# #   role_assignments = {
+# #     aks-kubelet-pull = {
+# #       principal_id = dependency.aks.outputs.kubelet_identity_object_id
+# #       role         = "AcrPull"
+# #     }
+# #   }
 # }
+
+
