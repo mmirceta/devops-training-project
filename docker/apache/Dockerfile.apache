@@ -1,0 +1,6 @@
+# apache image
+FROM httpd:2.4-alpine
+
+RUN apk update && apk upgrade --no-cache
+
+COPY index.html /usr/local/apache2/htdocs/index.html

@@ -13,6 +13,13 @@ services:
       - /var/cache/nginx:uid=101,gid=101
       - /var/run:uid=101,gid=101
 
+  apache:
+    build:
+      context: ./apache
+      dockerfile: Dockerfile.apache
+    ports:
+      - "8081:80"
+
   db:
     image: postgres:17
 
