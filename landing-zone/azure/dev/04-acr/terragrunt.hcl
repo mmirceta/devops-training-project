@@ -1,71 +1,71 @@
-include "root" {
-  path   = find_in_parent_folders("root.hcl")
-  expose = true
-}
+# include "root" {
+#   path   = find_in_parent_folders("root.hcl")
+#   expose = true
+# }
 
-include "dev" {
-  path   = find_in_parent_folders("dev.hcl")
-  expose = true
-}
+# include "dev" {
+#   path   = find_in_parent_folders("dev.hcl")
+#   expose = true
+# }
 
-terraform {
-  source = "../../../../modules/azure/acr"
-}
+# terraform {
+#   source = "../../../../modules/azure/acr"
+# }
 
-dependency "rg" {
-  config_path = "../01-rg/"
-  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
-  mock_outputs = {
-    name = "rg-dev-training"
-  }
-}
+# dependency "rg" {
+#   config_path = "../01-rg/"
+#   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+#   mock_outputs = {
+#     name = "rg-dev-training"
+#   }
+# }
 
-dependency "network" {
-  config_path = "../02-network/"
-  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
-  mock_outputs = {
-    subnet_ids = {
-      mgmt = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-mgmt-dev"
-      app  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-app-dev"
-      data = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-data-dev"
-    }
-    vnet_id   = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training"
-    vnet_name = "vnet-dev-training"
-  }
-}
+# dependency "network" {
+#   config_path = "../02-network/"
+#   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+#   mock_outputs = {
+#     subnet_ids = {
+#       mgmt = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-mgmt-dev"
+#       app  = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-app-dev"
+#       data = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training/subnets/snet-data-dev"
+#     }
+#     vnet_id   = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-dev-training/providers/Microsoft.Network/virtualNetworks/vnet-dev-training"
+#     vnet_name = "vnet-dev-training"
+#   }
+# }
 
-dependency "aks" {
-  config_path = "../08-aks/"
-  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
-  mock_outputs = {
-    kubelet_identity_object_id = "00000000-0000-0000-0000-000000000000"
-  }
-}
+# dependency "aks" {
+#   config_path = "../08-aks/"
+#   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+#   mock_outputs = {
+#     kubelet_identity_object_id = "00000000-0000-0000-0000-000000000000"
+#   }
+# }
 
-locals {
-  env = "dev"
-}
+# locals {
+#   env = "dev"
+# }
 
-inputs = {
-  resource_group_name = dependency.rg.outputs.name
+# inputs = {
+#   resource_group_name = dependency.rg.outputs.name
 
-  env = local.env
+#   env = local.env
 
-  sku           = "Premium"
-  admin_enabled = false
+#   sku           = "Premium"
+#   admin_enabled = false
 
-  subnet_id = dependency.network.outputs.subnet_ids["mgmt"]
-  vnet_id   = dependency.network.outputs.vnet_id
+#   subnet_id = dependency.network.outputs.subnet_ids["mgmt"]
+#   vnet_id   = dependency.network.outputs.vnet_id
 
-  tags = {
-    environment = local.env
-    project     = "devops-training"
-  }
+#   tags = {
+#     environment = local.env
+#     project     = "devops-training"
+#   }
 
-  role_assignments = {
-    aks-kubelet-pull = {
-      principal_id = dependency.aks.outputs.kubelet_identity_object_id
-      role         = "AcrPull"
-    }
-  }
-}
+#   role_assignments = {
+#     aks-kubelet-pull = {
+#       principal_id = dependency.aks.outputs.kubelet_identity_object_id
+#       role         = "AcrPull"
+#     }
+#   }
+# }
