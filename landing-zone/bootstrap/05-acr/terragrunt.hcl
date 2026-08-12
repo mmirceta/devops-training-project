@@ -28,13 +28,13 @@ dependency "network" {
   }
 }
 
-# dependency "aks" {
-#   config_path = "../08-aks/"
-#   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
-#   mock_outputs = {
-#     kubelet_identity_object_id = "00000000-0000-0000-0000-000000000000"
-#   }
-# }
+dependency "aks" {
+  config_path = "../../azure/dev/08-aks/"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    kubelet_identity_object_id = "00000000-0000-0000-0000-000000000000"
+  }
+}
 
 
 inputs = {
@@ -64,6 +64,10 @@ inputs = {
     },
     prod-sp-pull = {
       principal_id = "f8d2f62a-8897-4ab5-aa7a-b407ec626c0d"
+      role         = "AcrPull"
+    },
+    dev-aks-kubelet-pull = {
+      principal_id = dependency.aks.outputs.kubelet_identity_object_id
       role         = "AcrPull"
     }
   }
