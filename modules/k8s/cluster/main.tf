@@ -12,6 +12,14 @@ provider "azurerm" {
   use_cli = true
 }
 
+resource "azurerm_user_assigned_identity" "lz-aks" {
+  name                = "id-aks-${var.env}-training"
+  location            = var.location
+  resource_group_name = var.resource_group_name
+
+  tags = var.tags
+}
+
 resource "azurerm_kubernetes_cluster" "lz-aks" {
   name                = "aks-${var.env}-training"
   location            = var.location
@@ -20,7 +28,7 @@ resource "azurerm_kubernetes_cluster" "lz-aks" {
   kubernetes_version  = var.kubernetes_version
   sku_tier            = var.sku_tier
 
-  private_cluster_enabled = false
+  private_cluster_enabled = false #change to true if you want to enable private cluster
 
   default_node_pool {
     name                         = "system"
@@ -31,11 +39,13 @@ resource "azurerm_kubernetes_cluster" "lz-aks" {
   }
 
   identity {
-    type = "SystemAssigned"
+    type         = "UserAssigned"
+    identity_ids = [azurerm_user_assigned_identity.lz-aks.id]
   }
 
   network_profile {
-    network_plugin = "kubenet"
+    network_plugin      = "azure"
+    network_plugin_mode = "overlay"
   }
 
   tags = var.tags
@@ -50,4 +60,14 @@ resource "azurerm_kubernetes_cluster_node_pool" "lz-aks-applications" {
   vnet_subnet_id        = var.subnet_id
 
   tags = var.tags
+}
+
+data "azurerm_resource_group" "lz-aks-node-rg" {
+  name = "MC_${var.resource_group_name}_aks-${var.env}-training_${lower(replace(var.location, " ", ""))}"
+}
+
+resource "azurerm_role_assignment" "lz-aks-node-rg-network" {
+  scope                = data.azurerm_resource_group.lz-aks-node-rg.id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_user_assigned_identity.lz-aks.principal_id
 }
