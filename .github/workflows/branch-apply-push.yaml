@@ -24,7 +24,7 @@ concurrency:
 
 jobs:
   Plan:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
 
     env:
@@ -114,7 +114,7 @@ jobs:
 
   Review:
     needs: Plan
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'prod-review' || 'dev-review' }}
 
     steps:
@@ -126,7 +126,7 @@ jobs:
       - Plan
       - Review
 
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     environment: ${{ github.ref_name == 'main' && 'prod' || 'dev' }}
 
     env:
