@@ -1,4 +1,4 @@
-include "root"{
+include "root" {
   path = find_in_parent_folders("root.hcl")
 }
 
@@ -29,11 +29,11 @@ inputs = {
       service_endpoints = ["Microsoft.storage"]
     },
 
-    # runner = {
-    #   name             = "snet-${local.env}-runner"
-    #   address_prefixes = ["10.10.2.0/24"]
-    #   service_endpoints = ["Microsoft.storage"]
-    # },
+    runner = {
+      name             = "snet-${local.env}-runner"
+      address_prefixes = ["10.10.2.0/24"]
+      service_endpoints = ["Microsoft.storage"]
+    },
 
     acr = {
       name             = "snet-${local.env}-acr"
@@ -63,33 +63,35 @@ inputs = {
       }
     },
 
-    # runner = {
-    #   name = "nsg-${local.env}-runners"
+    runner = {
+      name = "nsg-${local.env}-runners"
 
-    #       allow_ssh_from_my_ip = {
-    #         name                       = "Allow-SSH-From-My-IP"
-    #         priority                   = 100
-    #         direction                  = "Inbound"
-    #         access                     = "Allow"
-    #         protocol                   = "Tcp"
-    #         source_port_range          = "*"
-    #         destination_port_range     = "22"
-    #         source_address_prefix      = get_env("TF_VAR_my_ip")
-    #         destination_address_prefix = "10.10.2.0/24"
-    #       }
+      rules = {
+        allow_ssh_from_my_ip = {
+          name                       = "Allow-SSH-From-My-IP"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range          = "*"
+          destination_port_range     = "22"
+          source_address_prefix      = get_env("TF_VAR_my_ip")
+          destination_address_prefix = "10.10.2.0/24"
+        }
 
-    #       deny_internet_inbound = {
-    #         name                       = "Deny-Internet-Inbound"
-    #         priority                   = 4000
-    #         direction                  = "Inbound"
-    #         access                     = "Deny"
-    #         protocol                   = "*"
-    #         source_port_range          = "*"
-    #         destination_port_range     = "*"
-    #         source_address_prefix      = "Internet"
-    #         destination_address_prefix = "*"
-    #       }
-    #     },
+        deny_internet_inbound = {
+          name                       = "Deny-Internet-Inbound"
+          priority                   = 4000
+          direction                  = "Inbound"
+          access                     = "Deny"
+          protocol                   = "*"
+          source_port_range          = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+      }
+    },
 
     acr = {
       name = "nsg-${local.env}-acr"

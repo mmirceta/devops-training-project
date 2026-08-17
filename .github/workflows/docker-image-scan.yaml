@@ -13,7 +13,18 @@ permissions:
 
 jobs:
   trivy-scan:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
+
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: nginx
+            dockerfile: docker/nginx/Dockerfile.nginx
+            context: docker/nginx
+          - name: apache
+            dockerfile: docker/apache/Dockerfile.apache
+            context: docker/apache
 
     strategy:
       fail-fast: false
