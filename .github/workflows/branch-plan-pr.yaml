@@ -82,6 +82,11 @@ jobs:
         working-directory: landing-zone/k8s/${{ github.base_ref == 'main' && 'prod' || 'dev' }}
         run: terragrunt run-all validate --terragrunt-non-interactive --terragrunt-parallelism 1
 
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
       - name: Install Checkov
         run: pip install checkov
 
