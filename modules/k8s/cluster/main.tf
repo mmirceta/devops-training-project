@@ -62,12 +62,12 @@ resource "azurerm_kubernetes_cluster_node_pool" "lz-aks-applications" {
   tags = var.tags
 }
 
-data "azurerm_resource_group" "lz-aks-node-rg" {
-  name = "MC_${var.resource_group_name}_aks-${var.env}-training_${lower(replace(var.location, " ", ""))}"
-}
+data "azurerm_subscription" "current" {}
 
 resource "azurerm_role_assignment" "lz-aks-node-rg-network" {
-  scope                = data.azurerm_resource_group.lz-aks-node-rg.id
+  scope                = "${data.azurerm_subscription.current.id}/resourceGroups/MC_${var.resource_group_name}_aks-${var.env}-training_${lower(replace(var.location, " ", ""))}"
   role_definition_name = "Network Contributor"
   principal_id         = azurerm_user_assigned_identity.lz-aks.principal_id
+
+  depends_on = [azurerm_kubernetes_cluster.lz-aks]
 }
