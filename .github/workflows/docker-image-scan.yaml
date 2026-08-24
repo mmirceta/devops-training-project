@@ -26,6 +26,17 @@ jobs:
             dockerfile: docker/apache/Dockerfile.apache
             context: docker/apache
 
+    strategy:
+      fail-fast: false
+      matrix:
+        image:
+          - name: nginx
+            dockerfile: docker/nginx/Dockerfile.nginx
+            context: docker/nginx
+          - name: apache
+            dockerfile: docker/apache/Dockerfile.apache
+            context: docker/apache
+
     steps:
       - uses: actions/checkout@v4
 
