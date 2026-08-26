@@ -20,6 +20,14 @@ resource "azurerm_user_assigned_identity" "lz-aks" {
   tags = var.tags
 }
 
+resource "azurerm_role_assignment" "lz-aks-dns" {
+  count = var.private_dns_zone_id != null ? 1 : 0
+
+  scope                = var.private_dns_zone_id
+  role_definition_name = "Private DNS Zone Contributor"
+  principal_id         = azurerm_user_assigned_identity.lz-aks.principal_id
+}
+
 resource "azurerm_kubernetes_cluster" "lz-aks" {
   name                = "aks-${var.env}-training"
   location            = var.location
@@ -28,7 +36,8 @@ resource "azurerm_kubernetes_cluster" "lz-aks" {
   kubernetes_version  = var.kubernetes_version
   sku_tier            = var.sku_tier
 
-  private_cluster_enabled = false #change to true if you want to enable private cluster
+  private_cluster_enabled = var.private_cluster_enabled
+  private_dns_zone_id     = var.private_dns_zone_id
 
   default_node_pool {
     name                         = "system"
@@ -49,6 +58,8 @@ resource "azurerm_kubernetes_cluster" "lz-aks" {
   }
 
   tags = var.tags
+
+  depends_on = [azurerm_role_assignment.lz-aks-dns]
 }
 
 resource "azurerm_kubernetes_cluster_node_pool" "lz-aks-applications" {
