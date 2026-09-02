@@ -47,16 +47,7 @@ resource "kubernetes_deployment" "nginx" {
 
       spec {
         node_selector = {
-          "kubernetes.azure.com/agentpool" = "system"
-        }
-
-        # System pool has only_critical_addons_enabled = true, which taints
-        # it with CriticalAddonsOnly=true:NoSchedule.
-        toleration {
-          key      = "CriticalAddonsOnly"
-          operator = "Equal"
-          value    = "true"
-          effect   = "NoSchedule"
+          "kubernetes.azure.com/agentpool" = "applications"
         }
 
         container {
