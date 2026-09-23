@@ -83,7 +83,7 @@ resource "kubernetes_stateful_set" "vault" {
 
       spec {
         automount_service_account_token = false
-        enable_service_links             = false
+        enable_service_links            = false
 
         security_context {
           fs_group = 1000
@@ -118,8 +118,8 @@ resource "kubernetes_stateful_set" "vault" {
 
           security_context {
             allow_privilege_escalation = false
-            run_as_group                = 1000
-            run_as_user                 = 100
+            run_as_group               = 1000
+            run_as_user                = 100
 
             capabilities {
               drop = ["ALL"]
@@ -132,7 +132,7 @@ resource "kubernetes_stateful_set" "vault" {
               port = 8200
             }
             initial_delay_seconds = 15
-            period_seconds         = 30
+            period_seconds        = 30
           }
 
           readiness_probe {
@@ -141,7 +141,7 @@ resource "kubernetes_stateful_set" "vault" {
               port = 8200
             }
             initial_delay_seconds = 5
-            period_seconds         = 10
+            period_seconds        = 10
           }
 
           volume_mount {
