@@ -33,6 +33,15 @@ resource "kubernetes_namespace" "vault" {
   }
 }
 
+resource "kubernetes_service_account" "vault" {
+  metadata {
+    name      = "vault"
+    namespace = kubernetes_namespace.vault.metadata[0].name
+  }
+
+  automount_service_account_token = false
+}
+
 resource "kubernetes_config_map" "vault_config" {
   metadata {
     name      = "vault-config"
@@ -82,6 +91,7 @@ resource "kubernetes_stateful_set" "vault" {
       }
 
       spec {
+        service_account_name            = kubernetes_service_account.vault.metadata[0].name
         automount_service_account_token = false
         enable_service_links            = false
 
@@ -228,7 +238,7 @@ resource "kubernetes_cluster_role_binding" "vault_tokenreview" {
 
   subject {
     kind      = "ServiceAccount"
-    name      = "default"
+    name      = kubernetes_service_account.vault.metadata[0].name
     namespace = kubernetes_namespace.vault.metadata[0].name
   }
 }
