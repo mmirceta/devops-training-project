@@ -26,6 +26,17 @@ variable "sku_tier" {
   default = "Free"
 }
 
+variable "private_cluster_enabled" {
+  type    = bool
+  default = false
+}
+
+variable "private_dns_zone_id" {
+  type        = string
+  default     = null
+  description = "Custom private DNS zone ID for the AKS API server. Requires the cluster identity to have Private DNS Zone Contributor on it."
+}
+
 variable "system_node_vm_size" {
   type    = string
   default = "Standard_D2s_v3"
