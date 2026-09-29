@@ -9,7 +9,7 @@ include "prod" {
 }
 
 terraform {
-  source = "../../../../modules/k8s/nginx"
+  source = "../../../../modules/k8s/vault"
 }
 
 dependency "aks" {
@@ -21,13 +21,6 @@ dependency "aks" {
     client_key             = "bW9jaw=="
     cluster_ca_certificate = "bW9jaw=="
   }
-}
-
-# Order-only: the SecretProviderClass CRD (installed by the vault module's
-# csi-secrets-store helm release) must exist before this module's
-# kubernetes_manifest resource can be planned/applied.
-dependencies {
-  paths = ["../03-vault"]
 }
 
 locals {
