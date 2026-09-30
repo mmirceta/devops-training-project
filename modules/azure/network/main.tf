@@ -80,5 +80,9 @@ resource "azurerm_subnet_network_security_group_association" "lz-subnet-nsg-asso
   subnet_id                 = azurerm_subnet.lz-subnet[each.key].id
   network_security_group_id = azurerm_network_security_group.lz-nsg[each.key].id
 
-  depends_on = [azurerm_network_security_group.lz-nsg]
+  # Must wait for all rules, not just the NSG shell: Azure validates rule
+  # completeness (e.g. AzureBastionSubnet's mandatory rule set) at
+  # association time, and races the association against in-flight rule
+  # creation otherwise.
+  depends_on = [azurerm_network_security_group.lz-nsg, azurerm_network_security_rule.lz-nsg-rule]
 }
