@@ -23,6 +23,13 @@ dependency "aks" {
   }
 }
 
+# Order-only: the SecretProviderClass CRD (installed by the vault module's
+# csi-secrets-store helm release) must exist before this module's
+# kubernetes_manifest resource can be planned/applied.
+dependencies {
+  paths = ["../03-vault"]
+}
+
 locals {
   env = "dev"
 }

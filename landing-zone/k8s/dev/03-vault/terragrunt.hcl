@@ -3,17 +3,17 @@ include "root" {
   expose = true
 }
 
-include "prod" {
-  path   = find_in_parent_folders("prod.hcl")
+include "dev" {
+  path   = find_in_parent_folders("dev.hcl")
   expose = true
 }
 
 terraform {
-  source = "../../../../modules/k8s/nginx"
+  source = "../../../../modules/k8s/vault"
 }
 
 dependency "aks" {
-  config_path = "../../../azure/prod/08-aks"
+  config_path = "../../../azure/dev/08-aks"
   mock_outputs_allowed_terraform_commands = ["validate", "plan"]
   mock_outputs = {
     host                    = "https://mock"
@@ -23,15 +23,8 @@ dependency "aks" {
   }
 }
 
-# Order-only: the SecretProviderClass CRD (installed by the vault module's
-# csi-secrets-store helm release) must exist before this module's
-# kubernetes_manifest resource can be planned/applied.
-dependencies {
-  paths = ["../03-vault"]
-}
-
 locals {
-  env = "prod"
+  env = "dev"
 }
 
 inputs = {

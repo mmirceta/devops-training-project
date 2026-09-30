@@ -42,3 +42,18 @@ variable "memory_limit" {
   type    = string
   default = "256Mi"
 }
+
+variable "vault_address" {
+  type    = string
+  default = "http://vault.vault.svc.cluster.local:8200"
+}
+
+variable "vault_role" {
+  type    = string
+  default = "nginx-role"
+}
+
+variable "vault_secret_path" {
+  type    = string
+  default = "secret/data/nginx"
+}

@@ -33,6 +33,14 @@ dependency "network" {
   }
 }
 
+dependency "aks_dns" {
+  config_path = "../07a-aks-dns/"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    id = "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/rg-devops-training-dev/providers/Microsoft.Network/privateDnsZones/privatelink.westeurope.azmk8s.io"
+  }
+}
+
 locals {
   env = "dev"
 }
@@ -43,6 +51,9 @@ inputs = {
   env = local.env
 
   subnet_id = dependency.network.outputs.subnet_ids["k8s"]
+
+  private_cluster_enabled = true
+  private_dns_zone_id     = dependency.aks_dns.outputs.id
 
   tags = {
     environment = local.env
