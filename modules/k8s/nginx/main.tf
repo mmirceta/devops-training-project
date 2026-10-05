@@ -122,6 +122,10 @@ resource "kubernetes_deployment" "nginx" {
           }
 
           resources {
+            requests = {
+              cpu    = var.cpu_request
+              memory = var.memory_request
+            }
             limits = {
               cpu    = var.cpu_limit
               memory = var.memory_limit
@@ -146,6 +150,42 @@ resource "kubernetes_deployment" "nginx" {
               secretProviderClass = kubernetes_manifest.nginx_vault_secrets.manifest.metadata.name
             }
           }
+        }
+      }
+    }
+  }
+
+  # The HPA below manages replica count via the scale subresource once
+  # deployed; without this, every plan shows a spurious diff fighting to
+  # reset replicas back to var.replicas.
+  lifecycle {
+    ignore_changes = [spec[0].replicas]
+  }
+}
+
+resource "kubernetes_horizontal_pod_autoscaler_v2" "nginx" {
+  metadata {
+    name      = "nginx"
+    namespace = kubernetes_namespace.nginx.metadata[0].name
+  }
+
+  spec {
+    min_replicas = var.min_replicas
+    max_replicas = var.max_replicas
+
+    scale_target_ref {
+      api_version = "apps/v1"
+      kind        = "Deployment"
+      name        = kubernetes_deployment.nginx.metadata[0].name
+    }
+
+    metric {
+      type = "Resource"
+      resource {
+        name = "cpu"
+        target {
+          type                = "Utilization"
+          average_utilization = var.target_cpu_utilization_percentage
         }
       }
     }
