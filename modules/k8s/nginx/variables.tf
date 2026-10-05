@@ -43,6 +43,31 @@ variable "memory_limit" {
   default = "256Mi"
 }
 
+variable "cpu_request" {
+  type    = string
+  default = "50m"
+}
+
+variable "memory_request" {
+  type    = string
+  default = "64Mi"
+}
+
+variable "min_replicas" {
+  type    = number
+  default = 1
+}
+
+variable "max_replicas" {
+  type    = number
+  default = 3
+}
+
+variable "target_cpu_utilization_percentage" {
+  type    = number
+  default = 70
+}
+
 variable "vault_address" {
   type    = string
   default = "http://vault.vault.svc.cluster.local:8200"
