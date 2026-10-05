@@ -31,7 +31,7 @@ resource "azurerm_bastion_host" "lz-bastion" {
   # Required for native-client features (az network bastion ssh/tunnel);
   # without it the CLI's bastion extension errors with a raw KeyError on
   # 'enableTunneling' since the API omits the field entirely.
-  tunneling_enabled   = var.sku == "Standard" ? true : null
+  tunneling_enabled = var.sku == "Standard" ? true : null
 
   ip_configuration {
     name                 = "bastion-ip-config"
