@@ -90,3 +90,39 @@ resource "kubernetes_service" "apache" {
     type = "ClusterIP"
   }
 }
+
+# Requires modules/k8s/ingress-nginx to already be deployed on the cluster
+# (provides the "nginx" IngressClass this references).
+resource "kubernetes_ingress_v1" "apache" {
+  metadata {
+    name      = "apache"
+    namespace = kubernetes_namespace.apache.metadata[0].name
+
+    annotations = {
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/$2"
+      "nginx.ingress.kubernetes.io/use-regex"      = "true"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+
+    rule {
+      http {
+        path {
+          path      = "/apache(/|$)(.*)"
+          path_type = "ImplementationSpecific"
+
+          backend {
+            service {
+              name = kubernetes_service.apache.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
