@@ -63,6 +63,17 @@ resource "kubernetes_manifest" "nginx_vault_secrets" {
   }
 }
 
+resource "kubernetes_config_map" "nginx_config" {
+  metadata {
+    name      = "nginx-config"
+    namespace = kubernetes_namespace.nginx.metadata[0].name
+  }
+
+  data = {
+    "server-tokens.conf" = "server_tokens off;\n"
+  }
+}
+
 resource "kubernetes_deployment" "nginx" {
   metadata {
     name      = "nginx"
@@ -137,6 +148,13 @@ resource "kubernetes_deployment" "nginx" {
             mount_path = "/mnt/secrets-store"
             read_only  = true
           }
+
+          volume_mount {
+            name       = "nginx-config"
+            mount_path = "/etc/nginx/conf.d/server-tokens.conf"
+            sub_path   = "server-tokens.conf"
+            read_only  = true
+          }
         }
 
         volume {
@@ -149,6 +167,14 @@ resource "kubernetes_deployment" "nginx" {
             volume_attributes = {
               secretProviderClass = kubernetes_manifest.nginx_vault_secrets.manifest.metadata.name
             }
+          }
+        }
+
+        volume {
+          name = "nginx-config"
+
+          config_map {
+            name = kubernetes_config_map.nginx_config.metadata[0].name
           }
         }
       }
@@ -209,5 +235,41 @@ resource "kubernetes_service" "nginx" {
     }
 
     type = "ClusterIP"
+  }
+}
+
+# Requires modules/k8s/ingress-nginx to already be deployed on the cluster
+# (provides the "nginx" IngressClass this references).
+resource "kubernetes_ingress_v1" "nginx" {
+  metadata {
+    name      = "nginx"
+    namespace = kubernetes_namespace.nginx.metadata[0].name
+
+    annotations = {
+      "nginx.ingress.kubernetes.io/rewrite-target" = "/$2"
+      "nginx.ingress.kubernetes.io/use-regex"      = "true"
+    }
+  }
+
+  spec {
+    ingress_class_name = "nginx"
+
+    rule {
+      http {
+        path {
+          path      = "/nginx(/|$)(.*)"
+          path_type = "ImplementationSpecific"
+
+          backend {
+            service {
+              name = kubernetes_service.nginx.metadata[0].name
+              port {
+                number = 80
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

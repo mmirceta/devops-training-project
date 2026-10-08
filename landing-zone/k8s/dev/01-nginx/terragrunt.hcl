@@ -25,9 +25,11 @@ dependency "aks" {
 
 # Order-only: the SecretProviderClass CRD (installed by the vault module's
 # csi-secrets-store helm release) must exist before this module's
-# kubernetes_manifest resource can be planned/applied.
+# kubernetes_manifest resource can be planned/applied. The "nginx"
+# IngressClass (installed by the ingress-nginx helm release) must exist
+# before this module's Ingress resource can be planned/applied.
 dependencies {
-  paths = ["../03-vault"]
+  paths = ["../03-vault", "../00-ingress-nginx"]
 }
 
 locals {
