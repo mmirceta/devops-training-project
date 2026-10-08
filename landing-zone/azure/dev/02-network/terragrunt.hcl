@@ -149,6 +149,23 @@ inputs = {
       name = "nsg-k8s-dev"
 
       rules = {
+        # Lets the ingress-nginx controller's public LoadBalancer reach its
+        # NodePort-mapped backends on the AKS nodes. The standard Kubernetes
+        # NodePort range, not the controller's current specific ports, since
+        # those are dynamically assigned and change if the Service is
+        # ever recreated.
+        allow_lb_nodeport_from_internet = {
+          name                       = "Allow-LB-NodePort-From-Internet"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range          = "*"
+          destination_port_range     = "30000-32767"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+
         deny_internet_inbound = {
           name                       = "Deny-Internet-Inbound"
           priority                   = 4000
