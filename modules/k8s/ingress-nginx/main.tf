@@ -44,4 +44,17 @@ resource "helm_release" "ingress_nginx" {
     name  = "controller.ingressClassResource.default"
     value = "true"
   }
+
+  # Without this, Azure's cloud provider health-probes the LoadBalancer
+  # backend on the same port/path (80, "/") that serves real traffic.
+  # Since no Ingress rule matches bare "/", the controller's default
+  # backend returns 404, the probe reads that as unhealthy, and the LB
+  # silently drops all traffic (hangs, not a clean rejection) even
+  # though the backend itself is fine. "Local" makes Kubernetes expose
+  # a dedicated healthCheckNodePort that Azure probes instead, decoupled
+  # from Ingress routing entirely.
+  set {
+    name  = "controller.service.externalTrafficPolicy"
+    value = "Local"
+  }
 }
