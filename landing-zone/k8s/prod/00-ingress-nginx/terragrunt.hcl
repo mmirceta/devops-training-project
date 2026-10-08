@@ -9,7 +9,7 @@ include "prod" {
 }
 
 terraform {
-  source = "../../../../modules/k8s/apache"
+  source = "../../../../modules/k8s/ingress-nginx"
 }
 
 dependency "aks" {
@@ -21,13 +21,6 @@ dependency "aks" {
     client_key             = "bW9jaw=="
     cluster_ca_certificate = "bW9jaw=="
   }
-}
-
-# Order-only: the "nginx" IngressClass (installed by the ingress-nginx
-# helm release) must exist before this module's Ingress resource can be
-# planned/applied.
-dependencies {
-  paths = ["../00-ingress-nginx"]
 }
 
 locals {
