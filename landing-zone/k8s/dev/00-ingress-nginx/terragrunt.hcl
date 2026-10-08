@@ -9,7 +9,7 @@ include "dev" {
 }
 
 terraform {
-  source = "../../../../modules/k8s/apache"
+  source = "../../../../modules/k8s/ingress-nginx"
 }
 
 dependency "aks" {
@@ -23,13 +23,6 @@ dependency "aks" {
   }
 }
 
-# Order-only: the "nginx" IngressClass (installed by the ingress-nginx
-# helm release) must exist before this module's Ingress resource can be
-# planned/applied.
-dependencies {
-  paths = ["../00-ingress-nginx"]
-}
-
 locals {
   env = "dev"
 }
@@ -39,6 +32,4 @@ inputs = {
   client_certificate      = dependency.aks.outputs.client_certificate
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
-
-  image = "acrbootstraptraining.azurecr.io/apache:latest"
 }
