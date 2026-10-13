@@ -32,4 +32,5 @@ inputs = {
   client_certificate      = dependency.aks.outputs.client_certificate
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
+  load_balancer_ip        = "10.30.4.250"
 }

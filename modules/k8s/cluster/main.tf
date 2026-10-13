@@ -82,3 +82,13 @@ resource "azurerm_role_assignment" "lz-aks-node-rg-network" {
 
   depends_on = [azurerm_kubernetes_cluster.lz-aks]
 }
+
+# The cloud provider places internal LoadBalancer frontends (e.g. the
+# ingress-nginx controller) in the node subnet, which lives in our own
+# VNet rather than the MC_* node resource group, so it needs join/read
+# rights on it too.
+resource "azurerm_role_assignment" "lz-aks-subnet-network" {
+  scope                = var.subnet_id
+  role_definition_name = "Network Contributor"
+  principal_id         = azurerm_user_assigned_identity.lz-aks.principal_id
+}

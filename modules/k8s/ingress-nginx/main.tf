@@ -57,4 +57,22 @@ resource "helm_release" "ingress_nginx" {
     name  = "controller.service.externalTrafficPolicy"
     value = "Local"
   }
+
+  # Internal-only LB: frontend gets a private IP in the AKS node subnet,
+  # reachable from inside the VNet (Bastion tunnel, runner) but never from
+  # the internet. Public exposure was abandoned after the Azure LB kept
+  # reporting the backend as unhealthy despite every manual check passing.
+  set {
+    name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/azure-load-balancer-internal"
+    value = "true"
+    type  = "string"
+  }
+
+  dynamic "set" {
+    for_each = var.load_balancer_ip != null ? [var.load_balancer_ip] : []
+    content {
+      name  = "controller.service.annotations.service\\.beta\\.kubernetes\\.io/azure-load-balancer-ipv4"
+      value = set.value
+    }
+  }
 }
