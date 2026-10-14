@@ -149,6 +149,23 @@ inputs = {
       name = "nsg-k8s-dev"
 
       rules = {
+        # Azure LB health probes come from 168.63.129.16 and ARE subject to
+        # NSG rules: Deny-Internet-Inbound below was silently blocking them,
+        # so the ingress LB marked every node unhealthy and dropped all
+        # traffic even though the backends were fine. Explicitly allow the
+        # AzureLoadBalancer tag ahead of the deny.
+        allow_azure_load_balancer_inbound = {
+          name                       = "Allow-AzureLoadBalancer-Inbound"
+          priority                   = 3900
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "*"
+          source_port_range          = "*"
+          destination_port_range     = "*"
+          source_address_prefix      = "AzureLoadBalancer"
+          destination_address_prefix = "*"
+        }
+
         deny_internet_inbound = {
           name                       = "Deny-Internet-Inbound"
           priority                   = 4000
