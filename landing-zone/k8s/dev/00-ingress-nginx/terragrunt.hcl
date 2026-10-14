@@ -32,5 +32,7 @@ inputs = {
   client_certificate      = dependency.aks.outputs.client_certificate
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
+  # Internal LB frontend in snet-k8s-dev. Requires the AKS identity's
+  # Network Contributor role on that subnet (see modules/k8s/cluster).
   load_balancer_ip        = "10.20.4.250"
 }
