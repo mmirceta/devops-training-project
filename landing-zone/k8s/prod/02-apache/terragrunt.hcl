@@ -23,6 +23,13 @@ dependency "aks" {
   }
 }
 
+# Order-only: the "nginx" IngressClass (installed by the ingress-nginx
+# helm release) must exist before this module's Ingress resource can be
+# planned/applied.
+dependencies {
+  paths = ["../00-ingress-nginx"]
+}
+
 locals {
   env = "prod"
 }
