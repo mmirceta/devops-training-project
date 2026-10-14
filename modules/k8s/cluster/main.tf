@@ -87,6 +87,10 @@ resource "azurerm_role_assignment" "lz-aks-node-rg-network" {
 # ingress-nginx controller) in the node subnet, which lives in our own
 # VNet rather than the MC_* node resource group, so it needs join/read
 # rights on it too.
+#
+# The CI service principal is only Contributor and can't create role
+# assignments, so this one has to be applied locally by an Owner first:
+#   terragrunt apply -target=azurerm_role_assignment.lz-aks-subnet-network
 resource "azurerm_role_assignment" "lz-aks-subnet-network" {
   scope                = var.subnet_id
   role_definition_name = "Network Contributor"
