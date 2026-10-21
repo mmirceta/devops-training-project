@@ -44,4 +44,7 @@ inputs = {
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
 
   image = "acrbootstraptraining.azurecr.io/nginx:latest"
+
+  # HTTPRoute on the shared NGINX Gateway Fabric Gateway (10.20.4.251).
+  gateway_route_enabled = true
 }
