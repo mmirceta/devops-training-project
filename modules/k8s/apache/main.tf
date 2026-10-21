@@ -126,3 +126,51 @@ resource "kubernetes_ingress_v1" "apache" {
     }
   }
 }
+
+# Gateway API equivalent of the Ingress above, attached to the shared
+# Gateway from modules/k8s/nginx-gateway-fabric. Off by default: the
+# HTTPRoute CRD must already exist on the cluster at plan time.
+resource "kubernetes_manifest" "apache_http_route" {
+  count = var.gateway_route_enabled ? 1 : 0
+
+  manifest = {
+    apiVersion = "gateway.networking.k8s.io/v1"
+    kind       = "HTTPRoute"
+
+    metadata = {
+      name      = "apache"
+      namespace = kubernetes_namespace.apache.metadata[0].name
+    }
+
+    spec = {
+      parentRefs = [{
+        name      = var.gateway_name
+        namespace = var.gateway_namespace
+      }]
+
+      rules = [{
+        matches = [{
+          path = {
+            type  = "PathPrefix"
+            value = "/apache"
+          }
+        }]
+
+        filters = [{
+          type = "URLRewrite"
+          urlRewrite = {
+            path = {
+              type               = "ReplacePrefixMatch"
+              replacePrefixMatch = "/"
+            }
+          }
+        }]
+
+        backendRefs = [{
+          name = kubernetes_service.apache.metadata[0].name
+          port = 80
+        }]
+      }]
+    }
+  }
+}

@@ -82,3 +82,19 @@ variable "vault_secret_path" {
   type    = string
   default = "secret/data/nginx"
 }
+
+variable "gateway_route_enabled" {
+  description = "Create an HTTPRoute on the shared NGINX Gateway Fabric Gateway. Requires the Gateway API CRDs to be installed first."
+  type        = bool
+  default     = false
+}
+
+variable "gateway_name" {
+  type    = string
+  default = "gateway"
+}
+
+variable "gateway_namespace" {
+  type    = string
+  default = "nginx-gateway"
+}
