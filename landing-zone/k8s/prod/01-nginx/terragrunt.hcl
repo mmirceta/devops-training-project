@@ -27,9 +27,10 @@ dependency "aks" {
 # csi-secrets-store helm release) must exist before this module's
 # kubernetes_manifest resource can be planned/applied. The "nginx"
 # IngressClass (installed by the ingress-nginx helm release) must exist
-# before this module's Ingress resource can be planned/applied.
+# before this module's Ingress resource can be planned/applied. Same for
+# the Gateway API CRDs + Gateway from nginx-gateway-fabric (HTTPRoute).
 dependencies {
-  paths = ["../03-vault", "../00-ingress-nginx"]
+  paths = ["../03-vault", "../00-ingress-nginx", "../04-nginx-gateway-fabric"]
 }
 
 locals {
