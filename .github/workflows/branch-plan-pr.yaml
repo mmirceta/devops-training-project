@@ -197,6 +197,15 @@ jobs:
                   chunk = chunk[:summary.start()]
               groups[ACTION_MAP[action]].append((resource, chunk.strip()))
 
+          # GitHub rejects comments over 65536 chars; large manifests (e.g.
+          # Gateway API CRDs) blow past that, so cap each resource's block.
+          MAX_BLOCK = 2000
+          for key, items in groups.items():
+              groups[key] = [
+                  (r, b if len(b) <= MAX_BLOCK else b[:MAX_BLOCK] + "\n# ... truncated, see workflow log for full plan")
+                  for r, b in items
+              ]
+
           def section(title, items):
               if not items:
                   return []
@@ -273,6 +282,15 @@ jobs:
               if summary:
                   chunk = chunk[:summary.start()]
               groups[ACTION_MAP[action]].append((resource, chunk.strip()))
+
+          # GitHub rejects comments over 65536 chars; large manifests (e.g.
+          # Gateway API CRDs) blow past that, so cap each resource's block.
+          MAX_BLOCK = 2000
+          for key, items in groups.items():
+              groups[key] = [
+                  (r, b if len(b) <= MAX_BLOCK else b[:MAX_BLOCK] + "\n# ... truncated, see workflow log for full plan")
+                  for r, b in items
+              ]
 
           def section(title, items):
               if not items:
