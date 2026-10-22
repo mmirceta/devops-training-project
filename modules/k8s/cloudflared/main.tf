@@ -75,16 +75,14 @@ resource "kubernetes_deployment" "cloudflared" {
             "--no-autoupdate",
             "--metrics", "0.0.0.0:2000",
             "run",
+            "--token-file", "/etc/cloudflared/token/token",
           ]
 
-          env {
-            name = "TUNNEL_TOKEN"
-            value_from {
-              secret_key_ref {
-                name = kubernetes_secret.tunnel_token.metadata[0].name
-                key  = "token"
-              }
-            }
+          # Token mounted as a file rather than an env var (CKV_K8S_35).
+          volume_mount {
+            name       = "tunnel-token"
+            mount_path = "/etc/cloudflared/token"
+            read_only  = true
           }
 
           # /ready returns 200 only once at least one connection to the
@@ -117,6 +115,14 @@ resource "kubernetes_deployment" "cloudflared" {
             capabilities {
               drop = ["ALL"]
             }
+          }
+        }
+
+        volume {
+          name = "tunnel-token"
+
+          secret {
+            secret_name = kubernetes_secret.tunnel_token.metadata[0].name
           }
         }
       }
