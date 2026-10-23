@@ -23,6 +23,17 @@ dependency "aks" {
   }
 }
 
+# Static public IP (+ the AKS identity's role on it) for the Gateway's
+# LoadBalancer.
+dependency "gateway_pip" {
+  config_path = "../../../azure/dev/12-gateway-pip"
+  mock_outputs_allowed_terraform_commands = ["validate", "plan"]
+  mock_outputs = {
+    name                = "pip-gw-dev-training"
+    resource_group_name = "rg-devops-training-dev"
+  }
+}
+
 locals {
   env = "dev"
 }
@@ -32,8 +43,10 @@ inputs = {
   client_certificate      = dependency.aks.outputs.client_certificate
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
-  # Internal LB frontend in snet-k8s-dev, next to ingress-nginx's .250.
-  # Requires the AKS identity's Network Contributor role on that subnet
-  # (see modules/k8s/cluster).
-  load_balancer_ip        = "10.20.4.251"
+  # Public LB frontend on pip-gw-dev-training
+  # (gw-dev-training.westeurope.cloudapp.azure.com). Inbound 80/443 is
+  # allowed on nsg-k8s-dev.
+  load_balancer_internal   = false
+  public_ip_name           = dependency.gateway_pip.outputs.name
+  public_ip_resource_group = dependency.gateway_pip.outputs.resource_group_name
 }

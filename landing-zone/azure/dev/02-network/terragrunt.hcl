@@ -149,6 +149,33 @@ inputs = {
       name = "nsg-k8s-dev"
 
       rules = {
+        # Public NGINX Gateway Fabric Gateway (pip-gw-dev-training). AKS
+        # LB rules use floating IP, so traffic reaches the nodes on the
+        # Service port (80/443), not the NodePort.
+        allow_http_from_internet = {
+          name                       = "Allow-HTTP-From-Internet"
+          priority                   = 100
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range          = "*"
+          destination_port_range     = "80"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+
+        allow_https_from_internet = {
+          name                       = "Allow-HTTPS-From-Internet"
+          priority                   = 110
+          direction                  = "Inbound"
+          access                     = "Allow"
+          protocol                   = "Tcp"
+          source_port_range          = "*"
+          destination_port_range     = "443"
+          source_address_prefix      = "Internet"
+          destination_address_prefix = "*"
+        }
+
         # Azure LB health probes come from 168.63.129.16 and ARE subject to
         # NSG rules: Deny-Internet-Inbound below was silently blocking them,
         # so the ingress LB marked every node unhealthy and dropped all
