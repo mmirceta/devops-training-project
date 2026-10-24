@@ -62,3 +62,21 @@ variable "public_ip_resource_group" {
   type        = string
   default     = null
 }
+
+variable "gateway_annotations" {
+  description = "Annotations on the Gateway, e.g. cert-manager.io/cluster-issuer to have cert-manager issue the HTTPS listener's certificate."
+  type        = map(string)
+  default     = {}
+}
+
+variable "https_hostname" {
+  description = "Hostname (wildcards allowed) for an HTTPS :443 listener. Null means HTTP only."
+  type        = string
+  default     = null
+}
+
+variable "https_certificate_secret" {
+  description = "Secret (in the Gateway's namespace) holding the HTTPS listener's TLS certificate."
+  type        = string
+  default     = "gateway-tls"
+}

@@ -98,18 +98,41 @@ resource "helm_release" "nginx_gateway_fabric" {
     # One shared Gateway; apps attach HTTPRoutes to it from their own
     # namespaces (see modules/k8s/nginx and modules/k8s/apache).
     gateways = [{
-      name      = var.gateway_name
-      namespace = "nginx-gateway"
+      name        = var.gateway_name
+      namespace   = "nginx-gateway"
+      annotations = var.gateway_annotations
       spec = {
         gatewayClassName = var.gateway_class_name
-        listeners = [{
-          name     = "http"
-          port     = 80
-          protocol = "HTTP"
-          allowedRoutes = {
-            namespaces = { from = "All" }
-          }
-        }]
+        listeners = concat(
+          [{
+            name     = "http"
+            port     = 80
+            protocol = "HTTP"
+            allowedRoutes = {
+              namespaces = { from = "All" }
+            }
+          }],
+          # HTTPS listener terminating TLS with a certificate from
+          # https_certificate_secret. With the cert-manager.io/cluster-issuer
+          # annotation (gateway_annotations), cert-manager issues it for
+          # https_hostname automatically.
+          var.https_hostname != null ? [{
+            name     = "https"
+            hostname = var.https_hostname
+            port     = 443
+            protocol = "HTTPS"
+            allowedRoutes = {
+              namespaces = { from = "All" }
+            }
+            tls = {
+              mode = "Terminate"
+              certificateRefs = [{
+                kind = "Secret"
+                name = var.https_certificate_secret
+              }]
+            }
+          }] : []
+        )
       }
     }]
   })]

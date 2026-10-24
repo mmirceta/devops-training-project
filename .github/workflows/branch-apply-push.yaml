@@ -35,6 +35,7 @@ jobs:
       TF_VAR_bastion_ssh_public_key: ${{ vars.TF_VAR_bastion_ssh_public_key }}
       ARM_USE_OIDC: true
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_cloudflare_api_token }}
 
     steps:
       - name: Checkout exact commit
@@ -137,6 +138,7 @@ jobs:
       TF_VAR_bastion_ssh_public_key: ${{ vars.TF_VAR_bastion_ssh_public_key }}
       ARM_USE_OIDC: true
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_cloudflare_api_token }}
 
     steps:
       - name: Checkout exact planned commit
