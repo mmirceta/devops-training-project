@@ -49,4 +49,12 @@ inputs = {
   load_balancer_internal   = false
   public_ip_name           = dependency.gateway_pip.outputs.name
   public_ip_resource_group = dependency.gateway_pip.outputs.resource_group_name
+
+  # HTTPS for every *.mapko.dev host; cert-manager (05-cert-manager) issues
+  # the wildcard certificate via DNS-01 on Cloudflare and keeps it renewed.
+  https_hostname           = "*.mapko.dev"
+  https_certificate_secret = "wildcard-mapko-dev-tls"
+  gateway_annotations = {
+    "cert-manager.io/cluster-issuer" = "letsencrypt-prod"
+  }
 }

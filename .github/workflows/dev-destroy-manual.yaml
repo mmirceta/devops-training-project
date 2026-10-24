@@ -20,6 +20,7 @@ jobs:
       ARM_USE_OIDC: true
 
       TF_VAR_vm_admin_password: ${{ secrets.TF_VAR_vm_admin_password }}
+      TF_VAR_cloudflare_api_token: ${{ secrets.TF_VAR_cloudflare_api_token }}
       #ARM_CLIENT_SECRET: ${{ secrets.ARM_CLIENT_SECRET }}
 
     steps:
