@@ -58,3 +58,9 @@ variable "gateway_namespace" {
   type    = string
   default = "nginx-gateway"
 }
+
+variable "gateway_route_hostnames" {
+  description = "Hostnames the HTTPRoute matches. external-dns creates a DNS record for each. Empty matches any host."
+  type        = list(string)
+  default     = []
+}

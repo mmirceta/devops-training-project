@@ -43,6 +43,8 @@ inputs = {
 
   image = "acrbootstraptraining.azurecr.io/apache:latest"
 
-  # HTTPRoute on the shared NGINX Gateway Fabric Gateway (10.20.4.251).
-  gateway_route_enabled = true
+  # HTTPRoute on the shared NGINX Gateway Fabric Gateway (public IP).
+  # external-dns creates the dev.mapko.dev record from the hostname.
+  gateway_route_enabled   = true
+  gateway_route_hostnames = ["dev.mapko.dev"]
 }
