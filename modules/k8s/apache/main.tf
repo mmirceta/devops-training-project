@@ -148,6 +148,9 @@ resource "kubernetes_manifest" "apache_http_route" {
         namespace = var.gateway_namespace
       }]
 
+      # external-dns publishes each hostname as a DNS record.
+      hostnames = var.gateway_route_hostnames
+
       rules = [{
         matches = [{
           path = {
