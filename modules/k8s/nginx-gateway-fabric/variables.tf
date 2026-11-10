@@ -39,8 +39,44 @@ variable "gateway_name" {
   default = "gateway"
 }
 
+variable "load_balancer_internal" {
+  description = "true: internal LoadBalancer in the AKS node subnet. false: public LoadBalancer (see public_ip_name)."
+  type        = bool
+  default     = true
+}
+
 variable "load_balancer_ip" {
-  description = "Static private IP for the Gateway's internal LoadBalancer, inside the AKS node subnet. Null lets Azure pick one."
+  description = "Static private IP for the Gateway's internal LoadBalancer, inside the AKS node subnet. Only used when load_balancer_internal is true. Null lets Azure pick one."
   type        = string
   default     = null
+}
+
+variable "public_ip_name" {
+  description = "Name of a pre-created static public IP for the Gateway's public LoadBalancer. Only used when load_balancer_internal is false. Null lets AKS create a dynamic one in the node resource group."
+  type        = string
+  default     = null
+}
+
+variable "public_ip_resource_group" {
+  description = "Resource group of public_ip_name, when it lives outside the MC_* node resource group. The AKS identity needs Network Contributor on the IP."
+  type        = string
+  default     = null
+}
+
+variable "gateway_annotations" {
+  description = "Annotations on the Gateway, e.g. cert-manager.io/cluster-issuer to have cert-manager issue the HTTPS listener's certificate."
+  type        = map(string)
+  default     = {}
+}
+
+variable "https_hostname" {
+  description = "Hostname (wildcards allowed) for an HTTPS :443 listener. Null means HTTP only."
+  type        = string
+  default     = null
+}
+
+variable "https_certificate_secret" {
+  description = "Secret (in the Gateway's namespace) holding the HTTPS listener's TLS certificate."
+  type        = string
+  default     = "gateway-tls"
 }

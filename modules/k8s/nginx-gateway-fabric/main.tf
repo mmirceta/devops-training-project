@@ -51,6 +51,20 @@ resource "kubernetes_manifest" "gateway_api_crds" {
   manifest = each.value
 }
 
+locals {
+  # Internal: LB frontend in the AKS node subnet, reachable only from inside
+  # the VNet (Bastion tunnel, runner). Public: frontend on a pre-created
+  # static public IP outside the MC_* node resource group. The internal
+  # annotation is always set explicitly so switching modes never relies on
+  # an old annotation being removed.
+  service_annotations = merge(
+    { "service.beta.kubernetes.io/azure-load-balancer-internal" = tostring(var.load_balancer_internal) },
+    var.load_balancer_internal && var.load_balancer_ip != null ? { "service.beta.kubernetes.io/azure-load-balancer-ipv4" = var.load_balancer_ip } : {},
+    !var.load_balancer_internal && var.public_ip_name != null ? { "service.beta.kubernetes.io/azure-pip-name" = var.public_ip_name } : {},
+    !var.load_balancer_internal && var.public_ip_resource_group != null ? { "service.beta.kubernetes.io/azure-load-balancer-resource-group" = var.public_ip_resource_group } : {},
+  )
+}
+
 resource "helm_release" "nginx_gateway_fabric" {
   name             = "nginx-gateway-fabric"
   namespace        = "nginx-gateway"
@@ -70,16 +84,11 @@ resource "helm_release" "nginx_gateway_fabric" {
         # healthCheckNodePort to probe, decoupled from HTTP routing.
         externalTrafficPolicy = "Local"
 
-        # Internal-only LB in the AKS node subnet, reachable from inside
-        # the VNet (Bastion tunnel, runner) but never from the internet.
         patches = [{
           type = "StrategicMerge"
           value = {
             metadata = {
-              annotations = merge(
-                { "service.beta.kubernetes.io/azure-load-balancer-internal" = "true" },
-                var.load_balancer_ip != null ? { "service.beta.kubernetes.io/azure-load-balancer-ipv4" = var.load_balancer_ip } : {}
-              )
+              annotations = local.service_annotations
             }
           }
         }]
@@ -89,18 +98,41 @@ resource "helm_release" "nginx_gateway_fabric" {
     # One shared Gateway; apps attach HTTPRoutes to it from their own
     # namespaces (see modules/k8s/nginx and modules/k8s/apache).
     gateways = [{
-      name      = var.gateway_name
-      namespace = "nginx-gateway"
+      name        = var.gateway_name
+      namespace   = "nginx-gateway"
+      annotations = var.gateway_annotations
       spec = {
         gatewayClassName = var.gateway_class_name
-        listeners = [{
-          name     = "http"
-          port     = 80
-          protocol = "HTTP"
-          allowedRoutes = {
-            namespaces = { from = "All" }
-          }
-        }]
+        listeners = concat(
+          [{
+            name     = "http"
+            port     = 80
+            protocol = "HTTP"
+            allowedRoutes = {
+              namespaces = { from = "All" }
+            }
+          }],
+          # HTTPS listener terminating TLS with a certificate from
+          # https_certificate_secret. With the cert-manager.io/cluster-issuer
+          # annotation (gateway_annotations), cert-manager issues it for
+          # https_hostname automatically.
+          var.https_hostname != null ? [{
+            name     = "https"
+            hostname = var.https_hostname
+            port     = 443
+            protocol = "HTTPS"
+            allowedRoutes = {
+              namespaces = { from = "All" }
+            }
+            tls = {
+              mode = "Terminate"
+              certificateRefs = [{
+                kind = "Secret"
+                name = var.https_certificate_secret
+              }]
+            }
+          }] : []
+        )
       }
     }]
   })]
