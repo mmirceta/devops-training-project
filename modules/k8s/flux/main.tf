@@ -16,11 +16,12 @@ provider "helm" {
   }
 }
 
-# Flux controllers and CRDs. Only source-controller (fetches the git repo)
-# and kustomize-controller (applies it) are needed to sync plain manifests;
-# the rest stay off to save requests on the applications node pool. Enable
-# helmController for HelmReleases, notificationController for alerts, and
-# the image* controllers for image update automation.
+# Flux controllers and CRDs: source-controller (fetches git repos and Helm
+# charts), kustomize-controller (applies manifests) and helm-controller
+# (installs HelmReleases, e.g. Headlamp from the GitOps repo). The rest stay
+# off to save requests on the applications node pool. Enable
+# notificationController for alerts and the image* controllers for image
+# update automation.
 resource "helm_release" "flux" {
   name             = "flux2"
   namespace        = "flux-system"
@@ -32,7 +33,7 @@ resource "helm_release" "flux" {
   values = [yamlencode({
     sourceController          = { create = true }
     kustomizeController       = { create = true }
-    helmController            = { create = false }
+    helmController            = { create = true }
     notificationController    = { create = false }
     imageAutomationController = { create = false }
     imageReflectionController = { create = false }
