@@ -9,7 +9,7 @@ include "dev" {
 }
 
 terraform {
-  source = "../../../../modules/k8s/apache"
+  source = "../../../../modules/k8s/flux"
 }
 
 dependency "aks" {
@@ -23,12 +23,11 @@ dependency "aks" {
   }
 }
 
-# Order-only: the "nginx" IngressClass (installed by the ingress-nginx
-# helm release) must exist before this module's Ingress resource can be
-# planned/applied. Same for the Gateway API CRDs + Gateway from
-# nginx-gateway-fabric (HTTPRoute).
+# Order-only: the apps Flux applies (nginx, apache) need the IngressClass
+# (ingress-nginx), the SecretProviderClass CRD and Vault (vault) and the
+# Gateway API CRDs plus the shared Gateway (nginx-gateway-fabric).
 dependencies {
-  paths = ["../00-ingress-nginx", "../04-nginx-gateway-fabric"]
+  paths = ["../00-ingress-nginx", "../03-vault", "../04-nginx-gateway-fabric"]
 }
 
 locals {
@@ -41,10 +40,8 @@ inputs = {
   client_key              = dependency.aks.outputs.client_key
   cluster_ca_certificate  = dependency.aks.outputs.cluster_ca_certificate
 
-  image = "acrbootstraptraining.azurecr.io/apache:latest"
-
-  # HTTPRoute on the shared NGINX Gateway Fabric Gateway (public IP).
-  # external-dns creates the dev.mapko.dev record from the hostname.
-  gateway_route_enabled   = true
-  gateway_route_hostnames = ["dev.mapko.dev"]
+  # nginx and apache for dev live in mmirceta/fluxcd under dev/ (they were
+  # Terraform units 01-nginx and 02-apache before).
+  git_url  = "https://github.com/mmirceta/fluxcd"
+  git_path = "./dev"
 }
