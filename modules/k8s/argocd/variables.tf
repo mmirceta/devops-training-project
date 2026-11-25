@@ -46,6 +46,6 @@ variable "git_branch" {
 }
 
 variable "git_path" {
-  description = "Folder in the GitOps repo the root Application syncs (recursively), e.g. dev."
+  description = "Folder in the GitOps repo whose top-level Application manifests the root Application syncs, e.g. dev."
   type        = string
 }
