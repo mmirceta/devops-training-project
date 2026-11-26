@@ -101,7 +101,10 @@ resource "helm_release" "argocd_apps" {
           repoURL        = var.git_url
           targetRevision = var.git_branch
           path           = var.git_path
-          directory      = { recurse = true }
+          # Top-level files only: <env>/ holds the child Applications
+          # (<env>/<app>.yaml) next to each app's own manifest folder
+          # (<env>/<app>/), which only that app's Application syncs.
+          directory = { recurse = false }
         }
         destination = {
           server = "https://kubernetes.default.svc"
